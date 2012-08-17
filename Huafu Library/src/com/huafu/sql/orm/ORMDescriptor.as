@@ -52,12 +52,12 @@ package com.huafu.sql.orm
 			
 			// table and database
 			meta = reflection.uniqueMetadata("Table");
-			_tableName = meta.argValue("tableName") ? meta.argValueString("tableName") : StringUtil.unCamelize(reflection.className);
+			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.className);
 			_databaseName = meta.argValue("database") ? meta.argValueString("database") : ORM.defaultDatabaseName;
 			
 			// special columns
 			pk = meta.argValueString("primaryKey", pk);
-			upd = meta.argValueString("modifiedDate", upd);
+			upd = meta.argValueString("updatedDate", upd);
 			cre = meta.argValueString("createdDate", cre);
 			del = meta.argValueString("deletedDate", del);
 			
