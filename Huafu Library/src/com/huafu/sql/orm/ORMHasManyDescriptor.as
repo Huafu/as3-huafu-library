@@ -62,6 +62,8 @@ package com.huafu.sql.orm
 			}
 			sql = "SELECT * FROM " + relatedOrmDescriptor.tableName + " WHERE " + relatedColumnName + " = :" + propertyName;
 			stmt = ormObject.connection.createStatement(sql, true);
+			// set the parameter to something so that the ORMIterator can detect it and bind it
+			stmt.parameters[propertyName] = null;
 			res = new ORMIterator(ormDescriptor.ormClass, stmt, ormObject);
 			ormObject[propertyName] = res;
 		}

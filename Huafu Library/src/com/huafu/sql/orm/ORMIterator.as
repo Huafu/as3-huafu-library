@@ -1,36 +1,80 @@
 package com.huafu.sql.orm
 {
-	import com.huafu.sql.SQLiteStatement;
-	
 	import flash.data.SQLResult;
+	import flash.data.SQLStatement;
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
 	
 	import mx.collections.ArrayList;
 
+	/**
+	 * Used to browse a result with rows that each contains an ORM object
+	 */
 	public class ORMIterator extends Proxy
 	{
+		/**
+		 * @var The data which is browsed is stored here
+		 */
 		private var _data : ArrayList;
-		private var _statement : SQLiteStatement;
+		/**
+		 * @var The statement object
+		 */
+		private var _statement : SQLStatement;
+		/**
+		 * @var If given, when the iteration will be initiated, the data wil be binded to
+		 * the statement using this object
+		 */
 		private var _objectUsedToReaload : Object;
+		/**
+		 * @var A pointer to the ORM class that this iterator delivers
+		 */
 		private var _ormClass : Class;
-		private var _cursorPosition : int;
+		/**
+		 * @var The instance of ORM object used by this object
+		 */
 		private var _ormInstance : ORM;
+		/**
+		 * @var Stores whether to executre the statement on each new iteration or not
+		 */
+		private var _loadOnEveryNewIteration : Boolean;
 		
-		public function ORMIterator( ormClass : Class, statement : SQLiteStatement, objectUsedToReloadOnNewIteration : Object = null )
+		
+		/**
+		 * Creates a new ierator for the given ORM class and data/statement
+		 * 
+		 * @param ormClass The ORM class of the models that this iterator will iterate
+		 * @param statementOrData Either a SQLStatement or anything thta can cast to an array.
+		 * If a SQLStatement is given, it'll be executed and used to get the ORM objects to iterate.
+		 * If it's an Array or anything that can cast to an Array, it'll be used as the list of
+		 * ORM objects to iterate through
+		 * @param objectUsedToBindParameters The object used to (re)bind parameters to
+		 * the statement given as second parameter when a new iteration occurs. You MUST provide it
+		 * when the second parameter is a statement and you want the iterator to (re)load the
+		 * data on the first iteration (and each other new iteration if the last parameter is true)
+		 * @param loadOnEveryNewIteration If true, the statement will be binded with parameters
+		 * and executed not only for the first iteraton, but for every new iteration
+		 */
+		public function ORMIterator( ormClass : Class, statementOrData : *, objectUsedToBindParameters : Object = null, loadOnEveryNewIteration : Boolean = false )
 		{
-			_objectUsedToReaload = objectUsedToReloadOnNewIteration;
-			_statement = statement;
-			if ( !_objectUsedToReaload )
+			_objectUsedToReaload = objectUsedToBindParameters;
+			_statement = statementOrData is SQLStatement ? statementOrData : null;
+			_loadOnEveryNewIteration = loadOnEveryNewIteration;
+			if ( _objectUsedToReaload )
 			{
-				_data = new ArrayList(_statement.getResult().data);
+				_data = null;
+			}
+			else
+			{
+				_data = new ArrayList(_statement ? _statement.getResult().data : statementOrData);
 			}
 			_ormClass = ormClass;
-			_cursorPosition = -1;
 		}
 		
 		
-		private function ormInstance() : ORM
+		/**
+		 * @var The global ORM instance of the iterator
+		 */
+		private function get ormInstance() : ORM
 		{
 			if ( !_ormInstance )
 			{
@@ -42,18 +86,28 @@ package com.huafu.sql.orm
 		
 		flash_proxy override function nextNameIndex( index : int ) : int
 		{
-			var name : String;
+			var name : String, paramsDiffers : Boolean = false;
 			if ( index == 0 && _objectUsedToReaload )
 			{
+				// (re)bind the parameters
 				for ( name in _statement.parameters )
 				{
 					if ( _objectUsedToReaload.hasOwnProperty(name) )
 					{
+						if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[name] )
+						{
+							paramsDiffers = true;
+						}
 						_statement.parameters[name] = _objectUsedToReaload[name];
 					}
 				}
-				_statement.execute();
-				_data = new ArrayList(_statement.getResult().data);
+				// re-execute only if the parameters are new, or no data yet, or force reload on
+				// every new iteration
+				if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
+				{
+					_statement.execute();
+					_data = new ArrayList(_statement.getResult().data);
+				}
 			}
 			if ( index > _data.length )
 			{
@@ -75,6 +129,12 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * Get an item looking at its index, creating the ORM instance for it if not created yet
+		 *
+		 * @param index The index of the item to get
+		 * @return ORM The ORM instance for thi item
+		 */
 		private function _get( index : int ) : ORM
 		{
 			var res : ORM;
