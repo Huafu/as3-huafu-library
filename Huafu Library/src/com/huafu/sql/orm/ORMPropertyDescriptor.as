@@ -6,18 +6,55 @@ package com.huafu.sql.orm
 	
 	import flash.utils.getDefinitionByName;
 
+	/**
+	 * Holds the description of an ORM property
+	 */
 	public class ORMPropertyDescriptor
 	{
-		
+		/**
+		 * @var Name of the property
+		 */
 		private var _name : String;
+		/**
+		 * @var Name of the column for that property in the database
+		 */
 		private var _columnName : String;
+		/**
+		 * @var The type of the property as a string
+		 */
 		private var _type : String;
+		/**
+		 * @var A pointer to the class of the property
+		 */
 		private var _typeClass : Class;
+		/**
+		 * @var The type of the column in the database
+		 */
 		private var _columnType : String;
+		/**
+		 * @var The ORM descriptor owning this property
+		 */
 		private var _ormDescriptor : ORMDescriptor;
+		/**
+		 * @var Stores whether this proeprty is read-only or not
+		 */
 		private var _readOnly : Boolean;
+		/**
+		 * @var Stores whether this property is nullable or not
+		 */
 		private var _nullable : Boolean;
 		
+		
+		/**
+		 * Creates a new ORM property descriptor
+		 * 
+		 * @param ormDescriptor The ORM descriptor owning this property
+		 * @param name The name of the property
+		 * @param type The type of the property
+		 * @param columnName The name of the column in the database
+		 * @param columnType The type of the column
+		 * @param nullable If the property can be null or not
+		 */
 		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String, columnName : String = null, columnType : String = null, nullable : Boolean = false )
 		{
 			_ormDescriptor = ormDescriptor;
@@ -47,42 +84,62 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * @var Name of the property
+		 */
 		public function get name() : String
 		{
 			return _name;
 		}
 		
 		
+		/**
+		 * @var Name of the column in the table
+		 */
 		public function get columnName() : String
 		{
 			return _columnName;
 		}
 		
 		
+		/**
+		 * @var Whether it is nullable or not
+		 */
 		public function get isNullable() : Boolean
 		{
 			return _nullable;
 		}
 		
 		
+		/**
+		 * @var The ORM descriptor owning this property
+		 */
 		public function get ormDescriptor() : ORMDescriptor
 		{
 			return _ormDescriptor;
 		}
 		
 		
+		/**
+		 * @var Whether the property is read-only or not
+		 */
 		public function get isReadOnly() : Boolean
 		{
 			return _readOnly;
 		}
-		
-		
 		public function set isReadOnly( value : Boolean ) : void
 		{
 			_readOnly = value;
 		}
 		
 		
+		/**
+		 * Creates a new ORM property descriptor looking at a given ReflectionProperty
+		 *
+		 * @param ownerOrm The ORMDescriptor which is owning the property
+		 * @param property The ReflectionProperty that the new descriptor will describe
+		 * @return The newly created ORMPropertyDescriptor
+		 */
 		public static function fromReflectionProperty( ownerOrm : ORMDescriptor, property : ReflectionProperty ) : ORMPropertyDescriptor
 		{
 			var name : String = property.name,

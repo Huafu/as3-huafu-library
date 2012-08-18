@@ -7,13 +7,39 @@ package com.huafu.sql.orm
 	
 	import flash.utils.getDefinitionByName;
 
+	
+	/**
+	 * The base class for any ORM relation object
+	 * 
+	 * @abstract
+	 */
 	public class ORMRelationDescriptorBase
 	{
+		/**
+		 * @var Name of the property holding the relation
+		 */
 		private var _propertyName : String;
+		/**
+		 * @var The ORMDescriptor owning the realtion
+		 */
 		private var _ormDescriptor : ORMDescriptor;
+		/**
+		 * @var The ORMDescriptor of the related model
+		 */
 		private var _relatedOrmDescriptor : ORMDescriptor;
+		/**
+		 * @var A pointer to the class of the related ORM
+		 */
 		private var _relatedOrmClass : Class;
 		
+		
+		/**
+		 * Constructor
+		 * 
+		 * @param ormDescriptor The owning ORM descriptor
+		 * @param propertyName The name of hte property holding the relation
+		 * @param relatedClass The class of the related ORM
+		 */
 		public function ORMRelationDescriptorBase( ormDescriptor : ORMDescriptor, propertyName : String, relatedClass : Class )
 		{
 			_propertyName = propertyName;
@@ -22,12 +48,18 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * @var The class of the related ORM
+		 */
 		public function get relatedOrmClass() : Class
 		{
 			return _relatedOrmClass;
 		}
 		
 		
+		/**
+		 * @var The descriptor of the related ORM
+		 */
 		public function get relatedOrmDescriptor() : ORMDescriptor
 		{
 			if ( !_relatedOrmDescriptor )
@@ -38,18 +70,31 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * @var The name of the property holding the relation
+		 */
 		public function get propertyName() : String
 		{
 			return _propertyName;
 		}
 		
 		
+		/**
+		 * @var The descriptor of theORM holing the relation
+		 */
 		public function get ormDescriptor() : ORMDescriptor
 		{
 			return _ormDescriptor;
 		}
 		
 		
+		/**
+		 * Creates a new relation object of the appropriate class looking at the given ReflectionProperty
+		 * 
+		 * @param ownerDescriptor The descriptor of the ORM owning the realtion
+		 * @param property The ReflectionProperty to use to setup the ORM relation
+		 * @return The newly created ORM relation object
+		 */
 		public static function fromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty ) : IORMRelationDescriptor
 		{
 			var res : IORMRelationDescriptor, relationType : String;
@@ -59,6 +104,14 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * Creates a "has one" relation object looking at the given property and meta reflections
+		 * 
+		 * @param ownerDescriptor The descriptor of the ORM holding the relation
+		 * @param property The reflection of the property hoding the relation
+		 * @param meta The reflection metadata describing the realtion
+		 * @return The new relation object
+		 */
 		private static function _createHasOneFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMHasOneDescriptor
 		{
 			var res : ORMHasOneDescriptor;
@@ -73,6 +126,14 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * Creates a "has many" relation object looking at the given property and meta reflections
+		 * 
+		 * @param ownerDescriptor The descriptor of the ORM holding the relation
+		 * @param property The reflection of the property hoding the relation
+		 * @param meta The reflection metadata describing the realtion
+		 * @return The new relation object
+		 */
 		private static function _createHasManyFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMHasManyDescriptor
 		{
 			var res : ORMHasManyDescriptor, ormClass : Class, ormClassName : String = ORMDescriptor.ormModelsPackageFullName + "::" + meta.argValueString("className");
