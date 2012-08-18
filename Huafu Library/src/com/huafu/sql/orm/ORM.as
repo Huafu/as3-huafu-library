@@ -120,6 +120,10 @@ package com.huafu.sql.orm
 		 * @var Used to know if the update handler should process anything or not
 		 */
 		private var _updateHandlerEnabled : int;
+		/**
+		 * @var Used to saved the last loaded data
+		 */
+		private var _lastLoadedData : Object;
 		
 		
 		public function ORM()
@@ -170,7 +174,17 @@ package com.huafu.sql.orm
 		 */
 		public function loadDataFromSqlResult( result : Object, flagAsLoaded : Boolean = true ) : void
 		{
+			var name : String;
 			updateHandlerEnabled = false;
+			// copy the data from the given result row to the last loaded data
+			if ( flagAsLoaded )
+			{
+				_lastLoadedData = new Object();
+				for ( name in result )
+				{
+					_lastLoadedData[name] = result[name];
+				}
+			}
 			ormDescriptor.sqlResultRowToOrmObject(result, this);
 			_isLoaded = flagAsLoaded;
 			_isSaved = flagAsLoaded;
@@ -387,6 +401,16 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * @var The last data that has been loaded to this ORM object, including
+		 * unused data if any
+		 */
+		public function get lastLoadedData() : Object
+		{
+			return _lastLoadedData;
+		}
+		
+		
+		/**
 		 * Get the connection object used to manipulate the table in the db
 		 * 
 		 * @return The connection object
@@ -558,6 +582,7 @@ package com.huafu.sql.orm
 			updateHandlerEnabled = false;
 			_isLoaded = false;
 			_isSaved = false;
+			_lastLoadedData = null;
 			_hasChanged = new Array();
 			loadDataFromSqlResult({}, false);
 			updateHandlerEnabled = true;
