@@ -14,5 +14,15 @@ package com.huafu.sql.orm
 		 * @param resultRow The row comming from the db that might be used to setup the object looking at the relation
 		 */
 		function setupOrmObject( ormObject : ORM, resultRow : Object ) : void;
+		
+		/**
+		 * The SQL code used to create the column in the ORM if any
+		 */
+		function get columnSqlCode() : String;
+		
+		/**
+		 * The name of the column, if any, in the related ORM
+		 */
+		function get columnName() : String;
 	}
 }

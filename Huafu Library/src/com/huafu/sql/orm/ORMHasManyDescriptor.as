@@ -39,6 +39,16 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * @inheritDoc
+		 */
+		public function get columnSqlCode() : String
+		{
+			// we return null because it's using the PK of the table which is of course already a column
+			return null;
+		}
+		
+		
+		/**
 		 * The name of the column in the related descriptor
 		 */
 		public function get relatedColumnName() : String

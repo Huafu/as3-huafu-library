@@ -66,6 +66,31 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * @inheritDoc
+		 */
+		public function get columnSqlCode() : String
+		{
+			var p : ORMPropertyDescriptor,
+				res : String;
+			if ( (p = relatedOrmDescriptor.propertyDescriptorByColumnName(columnName)) )
+			{
+				return p.sqlCode;
+			}
+			p = relatedOrmPropertyDescriptor;
+			res = "\"" + columnName + "\" " + p.columnDataType;
+			if ( p.columnDataLength > 0 )
+			{
+				res += "(" + p.columnDataLength + ")";
+			}
+			if ( !nullable )
+			{
+				res += " NOT NULL";
+			}
+			return res;
+		}
+		
+		
+		/**
 		 * Setup the property of an ORM object looking at this realtion
 		 * 
 		 * @param ormObject The ORM object to setup property of

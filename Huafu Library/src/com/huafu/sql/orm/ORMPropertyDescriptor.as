@@ -186,6 +186,29 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * The SQL code that creates the columns
+		 */
+		public function get sqlCode() : String
+		{
+			var res : String = "\"" + columnName + "\" " + columnDataType;
+			if ( columnDataLength > 0 )
+			{
+				res += "(" + columnDataLength + ")";
+			}
+			res += !isNullable ? " NOT NULL" : "";
+			if ( isPrimaryKey )
+			{
+				res += " PRIMARY KEY AUTOINCREMENT";
+			}
+			if ( isUnique )
+			{
+				res += " UNIQUE";
+			}
+			return res;
+		}
+		
+		
+		/**
 		 * Creates a new ORM property descriptor looking at a given ReflectionProperty
 		 *
 		 * @param ownerOrm The ORMDescriptor which is owning the property

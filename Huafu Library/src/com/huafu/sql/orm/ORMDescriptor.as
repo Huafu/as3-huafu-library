@@ -9,6 +9,7 @@ package com.huafu.sql.orm
 	import com.huafu.utils.reflection.ReflectionProperty;
 	
 	import flash.data.SQLResult;
+	import flash.errors.IllegalOperationError;
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getTimer;
 	
@@ -280,6 +281,37 @@ package com.huafu.sql.orm
 		public function get ormClass() : Class
 		{
 			return _ormClass;
+		}
+		
+		
+		public function get sqlCreationCode() : String
+		{
+			var cols : Array = new Array(),
+				prop : ORMPropertyDescriptor,
+				rel : IORMRelationDescriptor,
+				res : String = "CREATE TABLE \"" + tableName + "\"(";
+			if ( !primaryKeyProperty )
+			{
+				throw new IllegalOperationError("You must define a primary key column to the table '" + tableName + "' (model '" + ormClassQName + "')");
+			}
+			cols.push(primaryKeyProperty.sqlCode);
+			for each ( prop in _propertiesByName )
+			{
+				if ( prop.isPrimaryKey )
+				{
+					continue;
+				}
+				cols.push(prop.sqlCode);
+			}
+			for each ( rel in _relatedTo )
+			{
+				if ( !_propertiesByColumnName.exists(rel.columnName) && rel.columnSqlCode )
+				{
+					cols.push(rel.columnSqlCode);
+				}
+			}
+			res += cols.join(", ") + ")";
+			return res;
 		}
 		
 		
