@@ -34,11 +34,11 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Stores the property descriptor of the property that has been updated
+		 * Stores the property descriptor of the property that has been updated
 		 */
 		private var _property : ORMPropertyDescriptor = null;
 		/**
-		 * @var Stores the ID of the ORM object that has been deleted
+		 * Stores the ID of the ORM object that has been deleted
 		 */
 		private var _deletedId : int;
 		
@@ -65,7 +65,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The property descriptor of the property that has been updated
+		 * The property descriptor of the property that has been updated
 		 */
 		public function get property() : ORMPropertyDescriptor
 		{
@@ -74,7 +74,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The ID of the ORM object that has been deleted
+		 * The ID of the ORM object that has been deleted
 		 */
 		public function get deletedIndex() : int
 		{

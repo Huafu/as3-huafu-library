@@ -12,35 +12,35 @@ package com.huafu.sql.orm
 	public class ORMPropertyDescriptor
 	{
 		/**
-		 * @var Name of the property
+		 * Name of the property
 		 */
 		private var _name : String;
 		/**
-		 * @var Name of the column for that property in the database
+		 * Name of the column for that property in the database
 		 */
 		private var _columnName : String;
 		/**
-		 * @var The type of the property as a string
+		 * The type of the property as a string
 		 */
 		private var _type : String;
 		/**
-		 * @var A pointer to the class of the property
+		 * A pointer to the class of the property
 		 */
 		private var _typeClass : Class;
 		/**
-		 * @var The type of the column in the database
+		 * The type of the column in the database
 		 */
 		private var _columnType : String;
 		/**
-		 * @var The ORM descriptor owning this property
+		 * The ORM descriptor owning this property
 		 */
 		private var _ormDescriptor : ORMDescriptor;
 		/**
-		 * @var Stores whether this proeprty is read-only or not
+		 * Stores whether this proeprty is read-only or not
 		 */
 		private var _readOnly : Boolean;
 		/**
-		 * @var Stores whether this property is nullable or not
+		 * Stores whether this property is nullable or not
 		 */
 		private var _nullable : Boolean;
 		
@@ -85,7 +85,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Name of the property
+		 * Name of the property
 		 */
 		public function get name() : String
 		{
@@ -94,7 +94,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Name of the column in the table
+		 * Name of the column in the table
 		 */
 		public function get columnName() : String
 		{
@@ -103,7 +103,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether it is nullable or not
+		 * Whether it is nullable or not
 		 */
 		public function get isNullable() : Boolean
 		{
@@ -112,7 +112,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The ORM descriptor owning this property
+		 * The ORM descriptor owning this property
 		 */
 		public function get ormDescriptor() : ORMDescriptor
 		{
@@ -121,7 +121,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether the property is read-only or not
+		 * Whether the property is read-only or not
 		 */
 		public function get isReadOnly() : Boolean
 		{

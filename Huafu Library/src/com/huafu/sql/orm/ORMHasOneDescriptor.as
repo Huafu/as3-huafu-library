@@ -8,11 +8,11 @@ package com.huafu.sql.orm
 	public class ORMHasOneDescriptor extends ORMRelationDescriptorBase implements IORMRelationDescriptor
 	{
 		/**
-		 * @var If true, the relation is 0,1 else it is a 1,1
+		 * If true, the relation is 0,1 else it is a 1,1
 		 */
 		private var _nullable : Boolean;
 		/**
-		 * @var The name of the column in the table where the information is stored
+		 * The name of the column in the table where the information is stored
 		 */
 		private var _columnName : String;
 		
@@ -35,7 +35,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The related property descriptor object
+		 * The related property descriptor object
 		 */
 		public function get relatedOrmPropertyDescriptor() : ORMPropertyDescriptor
 		{
@@ -44,7 +44,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether the relation is 0,1 or 1,1
+		 * Whether the relation is 0,1 or 1,1
 		 */
 		public function get nullable() : Boolean
 		{

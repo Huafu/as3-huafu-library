@@ -16,19 +16,19 @@ package com.huafu.sql.orm
 	public class ORMRelationDescriptorBase
 	{
 		/**
-		 * @var Name of the property holding the relation
+		 * Name of the property holding the relation
 		 */
 		private var _propertyName : String;
 		/**
-		 * @var The ORMDescriptor owning the realtion
+		 * The ORMDescriptor owning the realtion
 		 */
 		private var _ormDescriptor : ORMDescriptor;
 		/**
-		 * @var The ORMDescriptor of the related model
+		 * The ORMDescriptor of the related model
 		 */
 		private var _relatedOrmDescriptor : ORMDescriptor;
 		/**
-		 * @var A pointer to the class of the related ORM
+		 * A pointer to the class of the related ORM
 		 */
 		private var _relatedOrmClass : Class;
 		
@@ -49,7 +49,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The class of the related ORM
+		 * The class of the related ORM
 		 */
 		public function get relatedOrmClass() : Class
 		{
@@ -58,7 +58,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The descriptor of the related ORM
+		 * The descriptor of the related ORM
 		 */
 		public function get relatedOrmDescriptor() : ORMDescriptor
 		{
@@ -71,7 +71,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The name of the property holding the relation
+		 * The name of the property holding the relation
 		 */
 		public function get propertyName() : String
 		{
@@ -80,7 +80,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The descriptor of theORM holing the relation
+		 * The descriptor of theORM holing the relation
 		 */
 		public function get ormDescriptor() : ORMDescriptor
 		{

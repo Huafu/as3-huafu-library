@@ -9,7 +9,7 @@ package com.huafu.sql.orm
 	public class ORMHasManyDescriptor extends ORMRelationDescriptorBase implements IORMRelationDescriptor
 	{
 		/**
-		 * @var The name of the column in the related table
+		 * The name of the column in the related table
 		 */
 		private var _relatedColumnName : String;
 		
@@ -30,7 +30,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Name of the column in the owner descriptor responsible to make the realtion
+		 * Name of the column in the owner descriptor responsible to make the realtion
 		 */
 		public function get columnName() : String
 		{
@@ -39,7 +39,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The name of the column in the related descriptor
+		 * The name of the column in the related descriptor
 		 */
 		public function get relatedColumnName() : String
 		{

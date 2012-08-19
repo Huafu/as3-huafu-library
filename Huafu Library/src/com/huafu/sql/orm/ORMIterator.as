@@ -13,28 +13,28 @@ package com.huafu.sql.orm
 	public class ORMIterator extends Proxy
 	{
 		/**
-		 * @var The data which is browsed is stored here
+		 * The data which is browsed is stored here
 		 */
 		private var _data : ArrayList;
 		/**
-		 * @var The statement object
+		 * The statement object
 		 */
 		private var _statement : SQLStatement;
 		/**
-		 * @var If given, when the iteration will be initiated, the data wil be binded to
+		 * If given, when the iteration will be initiated, the data wil be binded to
 		 * the statement using this object
 		 */
 		private var _objectUsedToReaload : Object;
 		/**
-		 * @var A pointer to the ORM class that this iterator delivers
+		 * A pointer to the ORM class that this iterator delivers
 		 */
 		private var _ormClass : Class;
 		/**
-		 * @var The instance of ORM object used by this object
+		 * The instance of ORM object used by this object
 		 */
 		private var _ormInstance : ORM;
 		/**
-		 * @var Stores whether to executre the statement on each new iteration or not
+		 * Stores whether to executre the statement on each new iteration or not
 		 */
 		private var _loadOnEveryNewIteration : Boolean;
 		
@@ -72,7 +72,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The global ORM instance of the iterator
+		 * The global ORM instance of the iterator
 		 */
 		private function get ormInstance() : ORM
 		{

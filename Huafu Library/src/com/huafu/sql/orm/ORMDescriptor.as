@@ -20,64 +20,64 @@ package com.huafu.sql.orm
 	public class ORMDescriptor
 	{
 		/**
-		 * @var The qname of the package where reside all your models
+		 * The qname of the package where reside all your models
 		 */
 		public static var ormModelsPackageFullName : String = "models";
 		
 		/**
-		 * @var Stores all ORM descriptor indexed by their class qname
+		 * Stores all ORM descriptor indexed by their class qname
 		 */
 		private static var _allByClassQName : HashMap = new HashMap();
 		
 		// basic stuff
 		/**
-		 * @var Pointer to the ORM class that describes this object
+		 * Pointer to the ORM class that describes this object
 		 */
 		private var _ormClass : Class;
 		/**
-		 * @var The qname of the ORM class taht describes this object
+		 * The qname of the ORM class taht describes this object
 		 */
 		private var _ormClassQName : String;
 		/**
-		 * @var The name of the table in the database
+		 * The name of the table in the database
 		 */
 		private var _tableName : String;
 		/**
-		 * @var The name of the database where the table is
+		 * The name of the database where the table is
 		 */
 		private var _databaseName : String;
 		
 		// properties indexed
 		/**
-		 * @var All properties of the ORM indexed by their name
+		 * All properties of the ORM indexed by their name
 		 */
 		private var _propertiesByName : HashMap;
 		/**
-		 * @var All properties of the ORM indexed by their column name
+		 * All properties of the ORM indexed by their column name
 		 */
 		private var _propertiesByColumnName : HashMap;
 		
 		// special columns
 		/**
-		 * @var A pointer to the primary key property
+		 * A pointer to the primary key property
 		 */
 		private var _primaryKeyProperty : ORMPropertyDescriptor;
 		/**
-		 * @var A pointer to the createdAt property of the ORM if any
+		 * A pointer to the createdAt property of the ORM if any
 		 */
 		private var _createdAtProperty : ORMPropertyDescriptor;
 		/**
-		 * @var A pointer to the updatedAt property of the ORM if any
+		 * A pointer to the updatedAt property of the ORM if any
 		 */
 		private var _updatedAtProperty : ORMPropertyDescriptor;
 		/**
-		 * @var A pointer to the deletedAt property of the ORM if any
+		 * A pointer to the deletedAt property of the ORM if any
 		 */
 		private var _deletedAtProperty : ORMPropertyDescriptor;
 		
 		// relations
 		/**
-		 * @var Stores all relations (has one, has many, belongs to) indexed by property names
+		 * Stores all relations (has one, has many, belongs to) indexed by property names
 		 */
 		private var _relatedTo : HashMap;
 		
@@ -163,7 +163,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The updatedAt property if any
+		 * The updatedAt property if any
 		 */
 		public function get updatedAtProperty() : ORMPropertyDescriptor
 		{
@@ -172,7 +172,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The createdAt property if any
+		 * The createdAt property if any
 		 */
 		public function get createdAtProperty() : ORMPropertyDescriptor
 		{
@@ -181,7 +181,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The deletedAt property if any
+		 * The deletedAt property if any
 		 */
 		public function get deletedAtProperty() : ORMPropertyDescriptor
 		{
@@ -219,7 +219,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The qname of the ORM class that describes this object
+		 * The qname of the ORM class that describes this object
 		 */
 		public function get ormClassQName() : String
 		{
@@ -228,7 +228,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var A pointer to the primary key property
+		 * A pointer to the primary key property
 		 */
 		public function get primaryKeyProperty() : ORMPropertyDescriptor
 		{
@@ -261,7 +261,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The name of the table corresponding to this descriptor in the database
+		 * The name of the table corresponding to this descriptor in the database
 		 */
 		public function get tableName() : String
 		{
@@ -270,7 +270,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var A pointer to the ORM class that this descriptor describes
+		 * A pointer to the ORM class that this descriptor describes
 		 */
 		public function get ormClass() : Class
 		{
@@ -316,7 +316,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var An array of all ORM class qnames already known
+		 * An array of all ORM class qnames already known
 		 */
 		public static function get allModelClassQNamesKnown() : Array
 		{

@@ -80,48 +80,48 @@ package com.huafu.sql.orm
 	public class ORM extends EventDispatcher
 	{
 		/**
-		 * @var Stores the default database name of any table without database name defined
+		 * Stores the default database name of any table without database name defined
 		 */
 		public static var defaultDatabaseName : String = "main";
 		
 		/**
-		 * @var The connection used for this model
+		 * The connection used for this model
 		 */
 		private var _connection : SQLiteConnection;
 		/**
-		 * @var The ORMDescriptor of this model
+		 * The ORMDescriptor of this model
 		 */
 		private var _descriptor : ORMDescriptor;
 		/**
-		 * @var The proxy used to observe changes on this object
+		 * The proxy used to observe changes on this object
 		 */
 		private var _objectProxy : ObjectProxy;
 		/**
-		 * @var Finds whether the object has been loaded or not
+		 * Finds whether the object has been loaded or not
 		 */
 		private var _isLoaded : Boolean;
 		/**
-		 * @var Stores any property related to the model that may have changed
+		 * Stores any property related to the model that may have changed
 		 */
 		private var _hasChanged : Array;
 		/**
-		 * @var Whether the object has been saved or not
+		 * Whether the object has been saved or not
 		 */
 		private var _isSaved : Boolean;
 		/**
-		 * @var Stores a pointer to the ORM class of this object
+		 * Stores a pointer to the ORM class of this object
 		 */
 		private var _class : Class;
 		/**
-		 * @var The QName of the class of this object
+		 * The QName of the class of this object
 		 */
 		private var _classQName : String;
 		/**
-		 * @var Used to know if the update handler should process anything or not
+		 * Used to know if the update handler should process anything or not
 		 */
 		private var _updateHandlerEnabled : int;
 		/**
-		 * @var Used to saved the last loaded data
+		 * Used to saved the last loaded data
 		 */
 		private var _lastLoadedData : Object;
 		
@@ -401,7 +401,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The last data that has been loaded to this ORM object, including
+		 * The last data that has been loaded to this ORM object, including
 		 * unused data if any
 		 */
 		public function get lastLoadedData() : Object
@@ -426,7 +426,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The name of the connection to use with this object
+		 * The name of the connection to use with this object
 		 */
 		public function set connectionName( connectionName : String ) : void
 		{
@@ -435,7 +435,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The value of the primary key
+		 * The value of the primary key
 		 */
 		public function get primaryKeyValue() : int
 		{
@@ -444,7 +444,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The name of the property containing the primary key value
+		 * The name of the property containing the primary key value
 		 */
 		public function get primaryKeyPropertyName() : String
 		{
@@ -453,7 +453,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var THe name of the primary key column
+		 * THe name of the primary key column
 		 */
 		public function get primaryKeyColumnName() : String
 		{
@@ -462,7 +462,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The qname of the class of this object
+		 * The qname of the class of this object
 		 */
 		public function get classQName() : String
 		{
@@ -475,7 +475,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var A pointer to the class of this object
+		 * A pointer to the class of this object
 		 */
 		public function get classRef() : Class
 		{
@@ -488,7 +488,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var The ORM descriptor of this objet
+		 * The ORM descriptor of this objet
 		 */
 		public function get ormDescriptor() : ORMDescriptor
 		{
@@ -497,7 +497,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether the object has been saved in the db or not
+		 * Whether the object has been saved in the db or not
 		 */
 		public function get isSaved() : Boolean
 		{
@@ -506,7 +506,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether the object has been loaded from the database or not
+		 * Whether the object has been loaded from the database or not
 		 */
 		public function get isLoaded() : Boolean
 		{
@@ -515,7 +515,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Whether the object has been changed
+		 * Whether the object has been changed
 		 */
 		public function get hasChanged() : Boolean
 		{
@@ -524,7 +524,7 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * @var Enable or disable the update handler
+		 * Enable or disable the update handler
 		 */
 		private function set updateHandlerEnabled( value : Boolean ) : void
 		{
