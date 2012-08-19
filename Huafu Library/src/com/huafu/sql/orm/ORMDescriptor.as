@@ -198,23 +198,24 @@ package com.huafu.sql.orm
 		 */
 		public function sqlResultRowToOrmObject( result : Object, object : ORM ) : void
 		{
+			var prop : ORMPropertyDescriptor, relation : IORMRelationDescriptor;
 			// load normal properties
-			_propertiesByName.forEach(function( name : String, prop : ORMPropertyDescriptor, index : int ) : void
+			for each ( prop in _propertiesByName )
 			{
 				if ( result.hasOwnProperty(prop.columnName) )
 				{
-					object[name] = result[prop.columnName];
+					object[prop.name] = result[prop.columnName];
 				}
 				else
 				{
-					object[name] = undefined;
+					object[prop.name] = undefined;
 				}
-			});
+			}
 			// prepare for relation properties
-			_relatedTo.forEach(function( name : String, relation : IORMRelationDescriptor, index : int ) : void
+			for each ( relation in _relatedTo )
 			{
 				relation.setupOrmObject(object, result);
-			});
+			}
 		}
 		
 		

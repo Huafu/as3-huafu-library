@@ -71,11 +71,11 @@ package com.huafu.utils
 		
 		public function toObject() : Object
 		{
-			var res : Object = {};
-			forEach(function(key : String, value : *, index : int) : void
+			var name : String, res : Object = {};
+			for each ( name in this )
 			{
-				res[key] = value;
-			});
+				res[name] = _data[name];
+			}
 			return res;
 		}
 		
@@ -83,16 +83,6 @@ package com.huafu.utils
 		public function keys() : Array
 		{
 			return _keys.toArray();
-		}
-		
-		
-		public function forEach( iterator : Function, context : Object = null ) : void
-		{
-			var index : int = 0, key : String;
-			for each ( key in _keys )
-			{
-				iterator.apply(context, [key, _data[key], index++]);
-			}
 		}
 		
 		
