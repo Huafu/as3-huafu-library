@@ -47,7 +47,7 @@ package com.huafu.sql.orm
 	 * <listing version="3.0">
 	 * 	// The Table metadata has to be present, but any of the arguments here are the default values so
 	 * 	// no need to put them if you inten to use the same values
-	 * 	[Table(name="user", database="main", primaryKey="id", createdDate="cretaedAt", updatedDate="updatedAt", deletedDate="deletedAt")]
+	 * 	[Table(name="user", database="main", primaryKey="id", connection="main", createdDate="cretaedAt", updatedDate="updatedAt", deletedDate="deletedAt")]
 	 * 	public class User extends ORM
 	 * 	{
 	 * 		// Also here the Column metadatas have to be present but hte arguments are the default values
@@ -103,10 +103,6 @@ package com.huafu.sql.orm
 		public static var defaultDatabaseName : String = "main";
 		
 		/**
-		 * The connection used for this model
-		 */
-		private var _connection : SQLiteConnection;
-		/**
 		 * The ORMDescriptor of this model
 		 */
 		private var _descriptor : ORMDescriptor;
@@ -142,6 +138,10 @@ package com.huafu.sql.orm
 		 * Used to saved the last loaded data
 		 */
 		private var _lastLoadedData : Object;
+		/**
+		 * The SQL connection used for the related table
+		 */
+		private var _connection : SQLiteConnection;
 		
 		
 		public function ORM()
@@ -437,7 +437,7 @@ package com.huafu.sql.orm
 		{
 			if ( !_connection )
 			{
-				_connection = SQLiteConnection.instance();
+				_connection = ormDescriptor.connection;
 			}
 			return _connection;
 		}

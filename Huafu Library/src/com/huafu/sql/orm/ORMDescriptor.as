@@ -2,6 +2,7 @@ package com.huafu.sql.orm
 {
 	import avmplus.getQualifiedClassName;
 	
+	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
@@ -47,7 +48,15 @@ package com.huafu.sql.orm
 		 * The name of the database where the table is
 		 */
 		private var _databaseName : String;
-		
+		/**
+		 * The SQL connection used for the related table
+		 */
+		private var _connection : SQLiteConnection;
+		/**
+		 * The name of the SQL connection used for the related table
+		 */
+		private var _connectionName : String;
+				
 		// properties indexed
 		/**
 		 * All properties of the ORM indexed by their name
@@ -105,6 +114,7 @@ package com.huafu.sql.orm
 			meta = reflection.uniqueMetadata("Table");
 			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.className);
 			_databaseName = meta.argValue("database") ? meta.argValueString("database") : ORM.defaultDatabaseName;
+			_connectionName = meta.argValueString("connection", null);
 			
 			// special columns
 			pk = meta.argValueString("primaryKey", pk);
@@ -152,6 +162,33 @@ package com.huafu.sql.orm
 					_deletedAtProperty = ormProp;
 				}
 			}
+			
+			// update the DB schema if necessary
+			updateDatabase();
+		}
+		
+		
+		/**
+		 * Get the connection object used to manipulate the table in the db
+		 * 
+		 * @return The connection object
+		 */
+		public function get connection() : SQLiteConnection
+		{
+			if ( !_connection )
+			{
+				_connection = SQLiteConnection.instance(_connectionName);
+			}
+			return _connection;
+		}
+		
+		
+		/**
+		 * Update the database to reflect the descriptor if necessary
+		 */
+		public function updateDatabase() : void
+		{
+			//TODO: update the DB
 		}
 		
 		
