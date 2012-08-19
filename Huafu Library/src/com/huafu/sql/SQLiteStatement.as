@@ -49,7 +49,7 @@ package com.huafu.sql
 		 * @return If no error, returns true, else returns false
 		 * @see #execute
 		 */
-		public function safeExecute( prefetch : int = -1, responder : Responder = null, throwError : Boolean = true ) : Boolean
+		public function safeExecute( throwError : Boolean = true, prefetch : int = -1, responder : Responder = null ) : Boolean
 		{
 			execute(prefetch, responder);
 			if ( throwError && _lastError )
