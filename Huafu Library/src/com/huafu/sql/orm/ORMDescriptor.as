@@ -112,6 +112,12 @@ package com.huafu.sql.orm
 			_ormClass = ormClass;
 			_relatedTo = new HashMap();
 			
+			// testing if the descriptor is already in the register
+			if ( _allByClassQName.exists(ormClassQName) )
+			{
+				throw new IllegalOperationError("You have to call ORMDescription.forClass() method and not directly the constructor of ORMDescriptor");
+			}
+			
 			// table and database
 			meta = reflection.uniqueMetadata("Table");
 			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.className);
