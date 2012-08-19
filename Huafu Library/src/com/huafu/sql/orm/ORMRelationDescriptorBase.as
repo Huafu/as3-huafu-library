@@ -159,6 +159,39 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * Creates a "belongs to" relation object looking at the given property and meta reflections
+		 * 
+		 * @param ownerDescriptor The descriptor of the ORM holding the relation
+		 * @param property The reflection of the property hoding the relation
+		 * @param meta The reflection metadata describing the realtion
+		 * @return The new relation object
+		 */
+		private static function _createBelongsToFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMBelongsToDescriptor
+		{
+			var res : ORMBelongsToDescriptor, ormClass : Class, ormClassName : String = ORMDescriptor.ormModelsPackageFullName + "::" + meta.argValueString("className");
+			try
+			{
+				ormClass = getDefinitionByName(ormClassName) as Class;
+			}
+			catch ( err : ReferenceError )
+			{
+				if ( err.errorID == 1065 )
+				{
+					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + meta.argValueString("className") + ";' in the constructor of '" + ownerDescriptor.ormClassQName + "' before 'super();', it should solve the problem.";
+				}
+				throw err;
+			}
+			res = new ORMBelongsToDescriptor(
+				ownerDescriptor,
+				property.name,
+				ormClass,
+				meta.argValueString("relatedColumnName")
+			);
+			return res;
+		}
+		
+		
 		
 	}
 }
