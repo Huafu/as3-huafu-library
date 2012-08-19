@@ -130,7 +130,7 @@ package com.huafu.sql.orm
 		/**
 		 * The data length of the column
 		 */
-		public function columnDataLength() : Number
+		public function get columnDataLength() : Number
 		{
 			return _columnTypeSize;
 		}
