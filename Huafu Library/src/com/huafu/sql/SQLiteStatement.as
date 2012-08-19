@@ -74,13 +74,13 @@ package com.huafu.sql
 			var name : String;
 			if ( arguments.length == 2 )
 			{
-				parameters[nameOrObject as String] = value;
+				parameters[":" + nameOrObject as String] = value;
 			}
 			else
 			{
 				for ( name in nameOrObject )
 				{
-					parameters[name] = nameOrObject[name];
+					parameters[":" + name] = nameOrObject[name];
 				}
 			}
 			return this;

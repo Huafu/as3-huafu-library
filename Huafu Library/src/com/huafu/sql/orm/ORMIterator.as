@@ -88,19 +88,20 @@ package com.huafu.sql.orm
 		
 		flash_proxy override function nextNameIndex( index : int ) : int
 		{
-			var name : String, paramsDiffers : Boolean = false;
+			var name : String, cleanName : String, paramsDiffers : Boolean = false;
 			if ( index == 0 && _objectUsedToReaload )
 			{
 				// (re)bind the parameters
 				for ( name in _statement.parameters )
 				{
-					if ( _objectUsedToReaload.hasOwnProperty(name) )
+					cleanName = name.substr(1);
+					if ( _objectUsedToReaload.hasOwnProperty(cleanName) )
 					{
-						if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[name] )
+						if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[cleanName] )
 						{
 							paramsDiffers = true;
 						}
-						_statement.parameters[name] = _objectUsedToReaload[name];
+						_statement.parameters[name] = _objectUsedToReaload[cleanName];
 					}
 				}
 				// re-execute only if the parameters are new, or no data yet, or force reload on
