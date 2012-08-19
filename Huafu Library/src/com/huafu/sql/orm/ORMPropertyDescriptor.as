@@ -177,6 +177,15 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Whether this property correspond to the PK of the table
+		 */
+		public function get isPrimaryKey() : Boolean
+		{
+			return (ormDescriptor.primaryKeyProperty === this);
+		}
+		
+		
+		/**
 		 * Creates a new ORM property descriptor looking at a given ReflectionProperty
 		 *
 		 * @param ownerOrm The ORMDescriptor which is owning the property
