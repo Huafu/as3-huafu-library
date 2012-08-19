@@ -7,12 +7,28 @@ package com.huafu.utils
 	import mx.collections.ArrayList;
 	import mx.utils.ArrayUtil;
 
+	
+	/**
+	 * Allows to access properties with set/get/unset and also the ability to
+	 * iterate over them
+	 */
 	public class HashMap extends Proxy
 	{
+		/**
+		 * All keys of this object
+		 */
 		private var _keys : ArrayList;
+		/**
+		 * All data of this object
+		 */
 		private var _data : Object;
 		
 		
+		/**
+		 * Constructs a new hash map object
+		 * 
+		 * @param initialData An optional object to get value(s) from
+		 */
 		public function HashMap( initialData : Object = null )
 		{
 			var key : String;
@@ -33,6 +49,13 @@ package com.huafu.utils
 		}
 		
 		
+		/**
+		 * Unset a property
+		 * 
+		 * @param name The name of the property to unset
+		 * @return Returns true if this proeprty existed and has been removed
+		 * else returns false
+		 */
 		public function unset( name : String ) : Boolean
 		{
 			var index : int;
@@ -46,6 +69,13 @@ package com.huafu.utils
 		}
 		
 		
+		/**
+		 * Set or update a property's value
+		 * 
+		 * @param name The name of the property to set
+		 * @param value The value of the property
+		 * @return Returns this object to do chained calls
+		 */
 		public function set( name : String, value : * ) : HashMap
 		{
 			_set(name, value, (_keyIndex(name) == -1));
@@ -53,22 +83,40 @@ package com.huafu.utils
 		}
 		
 		
-		public function get( name : String ) : *
+		/**
+		 * Get the value associated with a property
+		 * 
+		 * @param name The name of the property to get
+		 * @param ifUndefined The value returned if the proeprty isn't defined
+		 * @return The value of the property
+		 */
+		public function get( name : String, ifUndefined : * = null ) : *
 		{
 			if ( _keyIndex(name) == -1 )
 			{
-				return undefined;
+				return ifUndefined;
 			}
 			return _data[name];
 		}
 		
 		
+		/**
+		 * Finds wheteher a property exists or not
+		 * 
+		 * @param name The name of the property to test existence
+		 * @return Returns true if the proeprty exists, else false
+		 */
 		public function exists( name : String ) : Boolean
 		{
 			return (_keyIndex(name) != -1);
 		}
 		
 		
+		/**
+		 * Returns all the key/value pairs in an object
+		 * 
+		 * @return The object with all properties set with the key/value pairs of this object
+		 */
 		public function toObject() : Object
 		{
 			var name : String, res : Object = {};
@@ -80,30 +128,47 @@ package com.huafu.utils
 		}
 		
 		
+		/**
+		 * Returns all keys of the map in an array
+		 * 
+		 * @return The array of all keys
+		 */
 		public function keys() : Array
 		{
 			return _keys.toArray();
 		}
 		
 		
+		/**
+		 * @copy #unset
+		 */
 		flash_proxy override function deleteProperty( name : * ) : Boolean
 		{
 			return unset(name);
 		}
 		
 		
+		/**
+		 * @copy #get
+		 */
 		flash_proxy override function getProperty( name : * ) : *
 		{
 			return get(name);
 		}
 		
 		
+		/**
+		 * @copy #exists
+		 */
 		flash_proxy override function hasProperty( name : * ) : Boolean
 		{
 			return exists(name);
 		}
 		
 		
+		/**
+		 * @copy #set
+		 */
 		flash_proxy override function setProperty( name : *, value : * ) : void
 		{
 			set(name, value);
@@ -131,7 +196,13 @@ package com.huafu.utils
 			return _data[_keys[index - 1]];
 		}
 		
-		
+		/**
+		 * Set a property adding or not the key to they list of keys
+		 * 
+		 * @param name The name of the property
+		 * @param value The value of the property
+		 * @param addNameToKeys If true, will add the name of the property to the list of keys
+		 */
 		private function _set( name : String, value : *, addNameToKeys : Boolean = true ) : void
 		{
 			_data[name] = value;
@@ -141,6 +212,13 @@ package com.huafu.utils
 			}
 		}
 		
+		
+		/**
+		 * Finds the index of a key in the keys array
+		 * 
+		 * @param name The name of the key to get the index of
+		 * @return The index of that key or -1 if no such index
+		 */
 		private function _keyIndex( name : String ) : int
 		{
 			return _keys.getItemIndex(name);

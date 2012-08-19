@@ -2,6 +2,11 @@ package com.huafu.utils
 {
 	import mx.utils.StringUtil;
 	
+	
+	/**
+	 * Utility functions to manipulate strings
+	 * @abstract
+	 */
 	public class StringUtil extends mx.utils.StringUtil
 	{
 		
