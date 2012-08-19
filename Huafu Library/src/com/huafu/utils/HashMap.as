@@ -193,7 +193,7 @@ package com.huafu.utils
 		
 		flash_proxy override function nextNameIndex( index : int ) : int
 		{
-			if ( index > _keys.length )
+			if ( index >= _keys.length )
 			{
 				return 0;
 			}
@@ -203,13 +203,13 @@ package com.huafu.utils
 		
 		flash_proxy override function nextName( index : int ) : String
 		{
-			return _keys[index - 1];
+			return _keys.getItemAt(index - 1) as String;
 		}
 		
 		
 		flash_proxy override function nextValue( index : int ) : *
 		{
-			return _data[_keys[index - 1]];
+			return _data[_keys.getItemAt(index - 1)];
 		}
 		
 		/**
