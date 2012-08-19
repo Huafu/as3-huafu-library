@@ -362,5 +362,14 @@ package com.huafu.sql.orm
 		{
 			return _allByClassQName.keys();
 		}
+		
+		
+		/**
+		 * An array containing all known ORM descriptors
+		 */
+		public static function get allKnownOrmDescriptors() : Array
+		{
+			return _allByClassQName.toArray();
+		}
 	}
 }
