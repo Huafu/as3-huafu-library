@@ -15,11 +15,36 @@ package com.huafu.sql.orm
 	import mx.events.PropertyChangeEventKind;
 	import mx.utils.ObjectProxy;
 
+	
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.PROPERTY_UPDATE
+	 */
+	[Event(name="propertyUpdate", type="com.huafu.sql.orm.ORMEvent")]
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.LOADED
+	 */
+	[Event(name="loaded", type="com.huafu.sql.orm.ORMEvent")]
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.SAVING
+	 */
+	[Event(name="saving", type="com.huafu.sql.orm.ORMEvent")]
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.SAVED
+	 */
+	[Event(name="saved", type="com.huafu.sql.orm.ORMEvent")]
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.DELETING
+	 */
+	[Event(name="deleting", type="com.huafu.sql.orm.ORMEvent")]
+	/**
+	 * @eventType com.huafu.sql.orm.ORMEvent.DELETED
+	 */
+	[Event(name="deleted", type="com.huafu.sql.orm.ORMEvent")]
+	
 	/**
 	 * Base class of any ORM model the user may define
-	 * 
 	 * @example
-	 * <code>
+	 * <listing version="3.0">
 	 * 	// The Table metadata has to be present, but any of the arguments here are the default values so
 	 * 	// no need to put them if you inten to use the same values
 	 * 	[Table(name="user", database="main", primaryKey="id", createdDate="cretaedAt", updatedDate="updatedAt", deletedDate="deletedAt")]
@@ -68,15 +93,8 @@ package com.huafu.sql.orm
 	 * 			super();
 	 * 		}
 	 * 	}
-	 * </code>
+	 * </listing>
 	 */
-	[Event(name="propertyUpdate", type="com.huafu.sql.orm.ORMEvent")]
-	[Event(name="loaded", type="com.huafu.sql.orm.ORMEvent")]
-	[Event(name="saving", type="com.huafu.sql.orm.ORMEvent")]
-	[Event(name="saved", type="com.huafu.sql.orm.ORMEvent")]
-	[Event(name="deleting", type="com.huafu.sql.orm.ORMEvent")]
-	[Event(name="deleted", type="com.huafu.sql.orm.ORMEvent")]
-	
 	public class ORM extends EventDispatcher
 	{
 		/**
@@ -203,14 +221,14 @@ package com.huafu.sql.orm
 		 * @return ORMIterator The iterator to browse results
 		 * 
 		 * @example
-		 * <code>
+		 * <listing version="3.0">
 		 * 	var user : User = new User();
 		 * 	var iterator : ORMIterator = user.findAll({"age >": 18, "deleted": false}, {name: "desc"});
 		 * 	for each ( user in iterator )
 		 * 	{
 		 * 		// do something with each result
 		 * 	}
-		 * </code>
+		 * </listing>
 		 */
 		public function findAll( params : Object = null, orderBy : Object = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
