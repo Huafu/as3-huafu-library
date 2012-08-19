@@ -15,6 +15,7 @@ package com.huafu.sql
 	/**
 	 * Extends the native SQLConnection to be able to have auto connect on require
 	 * feature and other common stuffs like the createStatement and a statement cache
+	 * @see flash.data.SQLConnection
 	 */
 	public class SQLiteConnection extends SQLConnection
 	{
