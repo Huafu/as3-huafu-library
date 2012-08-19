@@ -47,6 +47,10 @@ package com.huafu.sql.orm
 		 * Stores whether this property is nullable or not
 		 */
 		private var _nullable : Boolean;
+		/**
+		 * Stores whether this property is unique or not
+		 */
+		private var _unique : Boolean;
 		
 		
 		/**
@@ -59,8 +63,9 @@ package com.huafu.sql.orm
 		 * @param columnType The type of the column
 		 * @param nullable If the property can be null or not
 		 * @param columnDataLength The column's data length
+		 * @param unique If the column is unique
 		 */
-		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String, columnName : String = null, columnType : String = null, nullable : Boolean = false, columnDataLength : Number = 0 )
+		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String, columnName : String = null, columnType : String = null, nullable : Boolean = false, columnDataLength : Number = 0, unique : Boolean = false )
 		{
 			_ormDescriptor = ormDescriptor;
 			_name = name;
@@ -70,6 +75,7 @@ package com.huafu.sql.orm
 			_columnName = columnName || StringUtil.unCamelize(name);
 			_columnType = columnType || type.split("::").pop().toString();
 			_columnTypeSize = columnDataLength;
+			_unique = unique;
 			if ( _columnType == "ByteArray")
 			{
 				_columnType = "BLOB";
@@ -162,6 +168,15 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Whether this column is unique or not
+		 */
+		public function get isUnique() : Boolean
+		{
+			return _unique;
+		}
+		
+		
+		/**
 		 * Creates a new ORM property descriptor looking at a given ReflectionProperty
 		 *
 		 * @param ownerOrm The ORMDescriptor which is owning the property
@@ -170,14 +185,16 @@ package com.huafu.sql.orm
 		 */
 		public static function fromReflectionProperty( ownerOrm : ORMDescriptor, property : ReflectionProperty ) : ORMPropertyDescriptor
 		{
-			var name : String = property.name,
-				type : String = property.dataType,
-				meta : ReflectionMetadata = property.uniqueMetadata("Column"),
-				columnName : String = meta.argValueString("name"),
-				columnType : String = meta.argValueString("type"),
-				nullable : Boolean = meta.argValueBoolean("nullable", false),
-				columnTypeSize : Number = meta.argValueNumber("size", 0);
-			return new ORMPropertyDescriptor(ownerOrm, name, type, columnName, columnType, nullable, columnTypeSize);
+			var meta : ReflectionMetadata = property.uniqueMetadata("Column");
+			return new ORMPropertyDescriptor(ownerOrm,
+				property.name,
+				property.dataType,
+				meta.argValueString("name"),
+				meta.argValueString("type"),
+				meta.hasArgument("nullable"),
+				meta.argValueNumber("size", 0),
+				meta.hasArgument("unique")
+			);
 		}
 	}
 }

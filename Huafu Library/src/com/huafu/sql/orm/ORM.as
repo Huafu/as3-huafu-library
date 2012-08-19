@@ -52,11 +52,11 @@ package com.huafu.sql.orm
 	 * 	{
 	 * 		// Also here the Column metadatas have to be present but hte arguments are the default values
 	 * 		// so if you intend to use the same values you don't need to put them (the type, if not set,
-	 * 		// is defined looking at the property's type
-	 * 		[Column(name="id", type="INTEGER", nullable="false")]
+	 * 		// is defined looking at the property's type)
+	 * 		[Column(name="id", type="INTEGER")]
 	 * 		public var id : int;
 	 * 
-	 * 		[Column]
+	 * 		[Column(size="30", unique)]
 	 * 		public var name : String;
 	 * 
 	 * 		// Here is how to define a "has one" relation type. By default the column name is the table name of the related
@@ -64,7 +64,7 @@ package com.huafu.sql.orm
 	 * 		// When loading this object, if the associated column isn't null, it'll load the associated model object in this
 	 * 		// property automatically, and changing this property will automatically save the good ID in the table when calling
 	 * 		// the save() method
-	 * 		[HasOne(columnName="avatar_id", nullable="false")]
+	 * 		[HasOne(columnName="avatar_id", nullable)]
 	 * 		public var avatar : Avatar;
 	 * 
 	 * 		// Here is how to define a one to many relation. In this exact example you don't have to define this
