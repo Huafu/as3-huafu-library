@@ -1,10 +1,13 @@
 package com.huafu.utils
 {
 	
+	import flash.utils.Proxy;
+	import flash.utils.flash_proxy;
+	
 	import mx.collections.ArrayList;
 	import mx.utils.ArrayUtil;
 
-	public class HashMap
+	public class HashMap extends Proxy
 	{
 		private var _keys : ArrayList;
 		private var _data : Object;
@@ -90,6 +93,52 @@ package com.huafu.utils
 			{
 				iterator.apply(context, [key, _data[key], index++]);
 			}
+		}
+		
+		
+		flash_proxy override function deleteProperty( name : * ) : Boolean
+		{
+			return unset(name);
+		}
+		
+		
+		flash_proxy override function getProperty( name : * ) : *
+		{
+			return get(name);
+		}
+		
+		
+		flash_proxy override function hasProperty( name : * ) : Boolean
+		{
+			return exists(name);
+		}
+		
+		
+		flash_proxy override function setProperty( name : *, value : * ) : void
+		{
+			set(name, value);
+		}
+		
+		
+		flash_proxy override function nextNameIndex( index : int ) : int
+		{
+			if ( index > _keys.length )
+			{
+				return 0;
+			}
+			return index + 1;
+		}
+		
+		
+		flash_proxy override function nextName( index : int ) : String
+		{
+			return _keys[index - 1];
+		}
+		
+		
+		flash_proxy override function nextValue( index : int ) : *
+		{
+			return _data[_keys[index - 1]];
 		}
 		
 		
