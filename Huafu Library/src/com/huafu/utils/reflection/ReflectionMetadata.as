@@ -4,14 +4,36 @@ package com.huafu.utils.reflection
 	
 	import flashx.textLayout.formats.Float;
 
+	/**
+	 * Reflects a metadata of a class, method or property
+	 */
 	public class ReflectionMetadata
 	{
+		/**
+		 * The xml node of the metadata
+		 */
 		private var _xml : XML;
+		/**
+		 * Cached arguments of this metadata
+		 */
 		private var _args : HashMap;
+		/**
+		 * The name of the metadaa
+		 */
 		private var _name : String;
-		private var _owner : *;
+		/**
+		 * The owner of this metadata
+		 */
+		private var _owner : ReflectionBase;
 		
-		public function ReflectionMetadata( owner : *, node : XML )
+		
+		/**
+		 * Creates a new reflection metadata
+		 * 
+		 * @param owner The owner of this metadata
+		 * @param node The XML node of the metadata
+		 */
+		public function ReflectionMetadata( owner : ReflectionBase, node : XML )
 		{
 			_xml = node;
 			_name = node.@name.toString();
@@ -19,18 +41,31 @@ package com.huafu.utils.reflection
 		}
 		
 		
+		/**
+		 * The name of the metadata
+		 */
 		public function get name() : String
 		{
 			return _name;
 		}
 		
 		
-		public function get owner() : *
+		/**
+		 * The owner of the metadata
+		 */
+		public function get owner() : ReflectionBase
 		{
 			return _owner;
 		}
 		
 		
+		/**
+		 * Get the value of a metadata's argument looking at its name
+		 * 
+		 * @param argKey The key of the argument
+		 * @param ifNotDefined The value returned if no such argument present
+		 * @return The value of the argument with given name
+		 */
 		public function argValue( argKey : String, ifNotDefined : * = null ) : *
 		{
 			var x : XML;
@@ -50,6 +85,14 @@ package com.huafu.utils.reflection
 		}
 		
 		
+		/**
+		 * Get the value of a metadata's argument as a string looking at its name
+		 * 
+		 * @param argKey The key of the argument
+		 * @param ifNotDefined The value returned if no such argument present
+		 * @return The value of the argument with given name
+		 * @see #argValue()
+		 */
 		public function argValueString( argKey : String, ifNotDefined : String = null ) : String
 		{
 			var res : * = argValue(argKey);
@@ -61,6 +104,14 @@ package com.huafu.utils.reflection
 		}
 		
 		
+		/**
+		 * Get the value of a metadata's argument as a boolean looking at its name
+		 * 
+		 * @param argKey The key of the argument
+		 * @param ifNotDefined The value returned if no such argument present
+		 * @return The value of the argument with given name
+		 * @see #argValue()
+		 */
 		public function argValueBoolean( argKey : String, ifNotDefined : Boolean = false ) : Boolean
 		{
 			var res : String = argValueString(argKey);
@@ -72,6 +123,14 @@ package com.huafu.utils.reflection
 		}
 		
 		
+		/**
+		 * Get the value of a metadata's argument as an integer looking at its name
+		 * 
+		 * @param argKey The key of the argument
+		 * @param ifNotDefined The value returned if no such argument present
+		 * @return The value of the argument with given name
+		 * @see #argValue()
+		 */
 		public function argValueInteger( argKey : String, ifNotDefined : int = undefined ) : int
 		{
 			var res : String = argValueString(argKey);
@@ -83,6 +142,14 @@ package com.huafu.utils.reflection
 		}
 		
 		
+		/**
+		 * Get the value of a metadata's argument as a number looking at its name
+		 * 
+		 * @param argKey The key of the argument
+		 * @param ifNotDefined The value returned if no such argument present
+		 * @return The value of the argument with given name
+		 * @see #argValue()
+		 */
 		public function argValueNumber( argKey : String, ifNotDefined : Number = undefined ) : Number
 		{
 			var res : String = argValueString(argKey);
