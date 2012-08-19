@@ -3,6 +3,7 @@ package com.huafu.sql.orm
 	import avmplus.getQualifiedClassName;
 	
 	import com.huafu.sql.SQLiteConnection;
+	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
@@ -11,6 +12,7 @@ package com.huafu.sql.orm
 	
 	import flash.data.SQLResult;
 	import flash.errors.IllegalOperationError;
+	import flash.errors.SQLError;
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getTimer;
 	
@@ -103,7 +105,7 @@ package com.huafu.sql.orm
 				meta : ReflectionMetadata, prop : ReflectionProperty,
 				ormProp : ORMPropertyDescriptor,
 				pk : String = "id", upd : String = "updatedAt", cre : String = "createdAt",
-				del : String = "deletedAt";
+				del : String = "deletedAt", relatedToProps : Array = new Array();
 			
 			// basic stuff
 			_ormClassQName = getQualifiedClassName(ormClass);
@@ -130,7 +132,7 @@ package com.huafu.sql.orm
 				if ( prop.hasMetadata("HasOne") || prop.hasMetadata("HasMany") || prop.hasMetadata("BelongsTo") )
 				{
 					// handle relations
-					_relatedTo.set(prop.name, ORMRelationDescriptorBase.fromReflectionProperty(this, prop));
+					relatedToProps.push(prop);
 					continue;
 				}
 				else if ( !prop.hasMetadata("Column") )
@@ -161,6 +163,14 @@ package com.huafu.sql.orm
 					ormProp.isReadOnly = true;
 					_deletedAtProperty = ormProp;
 				}
+			}
+			
+			// before setting up the related objects, we need to register this class
+			_allByClassQName.set(ormClassQName, this);
+			
+			for each ( prop in relatedToProps )
+			{
+				_relatedTo.set(prop.name, ORMRelationDescriptorBase.fromReflectionProperty(this, prop));
 			}
 			
 			// update the DB schema if necessary
@@ -367,7 +377,6 @@ package com.huafu.sql.orm
 			if ( !descriptor )
 			{
 				descriptor = new ORMDescriptor(ormObject.classRef);
-				_allByClassQName.set(ormObject.classQName, descriptor);
 			}
 			return descriptor;
 		}
@@ -386,7 +395,6 @@ package com.huafu.sql.orm
 			if ( !desc )
 			{
 				desc = new ORMDescriptor(ormClass);
-				_allByClassQName.set(classQName, desc);
 			}
 			return desc;
 		}
