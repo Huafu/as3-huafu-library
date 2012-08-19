@@ -1,6 +1,8 @@
 package com.huafu.sql
 {
 	import flash.data.SQLStatement;
+	import flash.errors.SQLError;
+	import flash.events.SQLErrorEvent;
 	import flash.net.Responder;
 	
 	
@@ -10,6 +12,11 @@ package com.huafu.sql
 	 */
 	public class SQLiteStatement extends SQLStatement
 	{
+		/**
+		 * Stores the last error that occurres or null if the last execute call doesn't throw any error
+		 */
+		private var _lastError : SQLError;
+		
 		
 		/**
 		 * Constructor
@@ -17,6 +24,8 @@ package com.huafu.sql
 		public function SQLiteStatement()
 		{
 			super();
+			_lastError = null;
+			addEventListener(SQLErrorEvent.ERROR, _sqlErrorHandler);
 		}
 		
 		
@@ -26,8 +35,28 @@ package com.huafu.sql
 		 */
 		override public function execute( prefetch : int = -1, responder : Responder = null ) : void
 		{
+			_lastError = null;
 			(sqlConnection as SQLiteConnection).autoOpen();
 			super.execute(prefetch, responder);
+		}
+		
+		
+		/**
+		 * Execute the statement, but return false or throw an exception if there was a SQL error
+		 * 
+		 * @inheritDoc
+		 * @param throwError If true, the error will be thrown if any, else only false returned in case of error
+		 * @return If no error, returns true, else returns false
+		 * @see #execute
+		 */
+		public function safeExecute( prefetch : int = -1, responder : Responder = null, throwError : Boolean = true ) : Boolean
+		{
+			execute(prefetch, responder);
+			if ( throwError && _lastError )
+			{
+				throw _lastError;
+			}
+			return !_lastError;
 		}
 		
 		
@@ -55,6 +84,26 @@ package com.huafu.sql
 				}
 			}
 			return this;
+		}
+		
+		
+		/**
+		 * The error (if any) that occures during last operation ran by exectue() method
+		 */
+		public function get lastError() : SQLError
+		{
+			return _lastError;
+		}
+		
+		
+		/**
+		 * Handle the SQL error event
+		 * 
+		 * @param event The event triggered
+		 */
+		private function _sqlErrorHandler( event : SQLErrorEvent ) : void
+		{
+			_lastError = event.error;
 		}
 	}
 }
