@@ -5,6 +5,7 @@ package com.huafu.sql.orm
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
 	
+	import flash.debugger.enterDebugger;
 	import flash.utils.getDefinitionByName;
 
 	
@@ -119,7 +120,7 @@ package com.huafu.sql.orm
 				ownerDescriptor,
 				property.name,
 				property.dataTypeClass,
-				meta.argValueBoolean("nullable", false),
+				meta.hasArgument("nullable"),
 				meta.argValueString("columnName")
 			);
 			return res;

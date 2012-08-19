@@ -195,7 +195,7 @@ package com.huafu.sql.orm
 			{
 				res += "(" + columnDataLength + ")";
 			}
-			res += !isNullable ? " NOT NULL" : "";
+			res += " " + (isNullable ? "" : "NOT ") + "NULL";
 			if ( isPrimaryKey )
 			{
 				res += " PRIMARY KEY AUTOINCREMENT";

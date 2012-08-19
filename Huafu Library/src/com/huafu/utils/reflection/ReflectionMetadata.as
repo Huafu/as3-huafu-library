@@ -171,13 +171,20 @@ package com.huafu.utils.reflection
 		 */
 		private function _loadArgs() : void
 		{
-			var x : XML;
+			var x : XML, k : String, v : *;
 			if ( !_args )
 			{
 				_args = new HashMap();
 				for each ( x in _xml.arg )
 				{
-					_args.set(x.@key.toString(), x.@value);
+					k = x.@key.toString();
+					v = x.@value;
+					if ( !k )
+					{
+						k = v.toString();
+						v = true;
+					}
+					_args.set(k, v);
 				}
 			}
 		}

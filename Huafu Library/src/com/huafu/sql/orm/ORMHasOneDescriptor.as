@@ -82,10 +82,7 @@ package com.huafu.sql.orm
 			{
 				res += "(" + p.columnDataLength + ")";
 			}
-			if ( !nullable )
-			{
-				res += " NOT NULL";
-			}
+			res += " " + (nullable ? "" : "NOT ") + "NULL";
 			return res;
 		}
 		
