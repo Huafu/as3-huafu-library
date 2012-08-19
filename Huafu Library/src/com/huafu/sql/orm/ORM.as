@@ -170,7 +170,7 @@ package com.huafu.sql.orm
 				+ " WHERE " + primaryKeyColumnName + " = :" + primaryKeyPropertyName);
 			_reset();
 			stmt.bind(primaryKeyPropertyName, id);
-			stmt.execute();
+			stmt.safeExecute();
 			res = stmt.getResult();
 			if ( res.data.length == 0 )
 			{
@@ -276,7 +276,7 @@ package com.huafu.sql.orm
 			}
 			stmt = connection.createStatement(sql);
 			stmt.bind(binds);
-			stmt.execute();
+			stmt.safeExecute();
 			return new ORMIterator(classRef, stmt);
 		}
 		
@@ -313,7 +313,7 @@ package com.huafu.sql.orm
 			}
 			stmt = connection.createStatement(sql, true);
 			stmt.bind(params || {});
-			stmt.execute();
+			stmt.safeExecute();
 			return new ORMIterator(classRef, stmt);
 		}
 		
@@ -362,7 +362,7 @@ package com.huafu.sql.orm
 				// execute the sql
 				stmt = connection.createStatement(sql, true);
 				stmt.bind(params);
-				stmt.execute();
+				stmt.safeExecute();
 				if ( stmt.getResult().rowsAffected > 0 )
 				{
 					_isSaved = true;
@@ -400,7 +400,7 @@ package com.huafu.sql.orm
 				// execute sql
 				stmt = connection.createStatement(sql, true);
 				stmt.bind(params);
-				stmt.execute();
+				stmt.safeExecute();
 				res = stmt.getResult();
 				if ( res.rowsAffected == 1 )
 				{

@@ -1,5 +1,7 @@
 package com.huafu.sql.orm
 {
+	import com.huafu.sql.SQLiteStatement;
+	
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
 	import flash.utils.Proxy;
@@ -19,7 +21,7 @@ package com.huafu.sql.orm
 		/**
 		 * The statement object
 		 */
-		private var _statement : SQLStatement;
+		private var _statement : SQLiteStatement;
 		/**
 		 * If given, when the iteration will be initiated, the data wil be binded to
 		 * the statement using this object
@@ -105,7 +107,7 @@ package com.huafu.sql.orm
 				// every new iteration
 				if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
 				{
-					_statement.execute();
+					_statement.safeExecute();
 					_data = new ArrayList(_statement.getResult().data);
 				}
 			}
