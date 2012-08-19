@@ -60,6 +60,19 @@ package com.huafu.utils.reflection
 		
 		
 		/**
+		 * Finds wether an argument is present or not
+		 * 
+		 * @param name The name of the argument to test existence
+		 * @return Returns true if the argument is defined, else false
+		 */
+		public function hasArgument( name : String ) : Boolean
+		{
+			_loadArgs();
+			return _args.exists(name);
+		}
+		
+		
+		/**
 		 * Get the value of a metadata's argument looking at its name
 		 * 
 		 * @param argKey The key of the argument
@@ -68,15 +81,7 @@ package com.huafu.utils.reflection
 		 */
 		public function argValue( argKey : String, ifNotDefined : * = null ) : *
 		{
-			var x : XML;
-			if ( !_args )
-			{
-				_args = new HashMap();
-				for each ( x in _xml.arg )
-				{
-					_args.set(x.@key.toString(), x.@value);
-				}
-			}
+			_loadArgs();
 			if ( !_args.exists(argKey) )
 			{
 				return ifNotDefined;
@@ -158,6 +163,23 @@ package com.huafu.utils.reflection
 				return ifNotDefined;
 			}
 			return parseFloat(res);
+		}
+		
+		
+		/**
+		 * Load all the arguments if not loaded already
+		 */
+		private function _loadArgs() : void
+		{
+			var x : XML;
+			if ( !_args )
+			{
+				_args = new HashMap();
+				for each ( x in _xml.arg )
+				{
+					_args.set(x.@key.toString(), x.@value);
+				}
+			}
 		}
 	}
 }
