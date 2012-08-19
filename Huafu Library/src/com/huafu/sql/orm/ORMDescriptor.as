@@ -11,6 +11,7 @@ package com.huafu.sql.orm
 	import com.huafu.utils.reflection.ReflectionProperty;
 	
 	import flash.data.SQLResult;
+	import flash.data.SQLTableSchema;
 	import flash.errors.IllegalOperationError;
 	import flash.errors.SQLError;
 	import flash.utils.getDefinitionByName;
@@ -204,7 +205,18 @@ package com.huafu.sql.orm
 		 */
 		public function updateDatabase() : void
 		{
-			//TODO: update the DB
+			var stmt : SQLiteStatement, schema : SQLTableSchema;
+			if ( (schema = connection.getTableSchema(tableName)) )
+			{
+				// the table exists, check if the schema is the same
+				//TODO: check th table's columns and alter if needed
+			}
+			else
+			{
+				// the table doesn't exist, let's create it
+				stmt = connection.createStatement(sqlCreationCode, true);
+				stmt.safeExecute();
+			}
 		}
 		
 		
