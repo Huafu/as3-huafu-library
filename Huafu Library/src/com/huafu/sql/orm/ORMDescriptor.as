@@ -132,18 +132,22 @@ package com.huafu.sql.orm
 				_propertiesByName.set(ormProp.name, ormProp);
 				if ( pk == ormProp.name )
 				{
+					ormProp.isReadOnly = true;
 					_primaryKeyProperty = ormProp;
 				}
 				else if ( cre == ormProp.name )
 				{
+					ormProp.isReadOnly = true;
 					_createdAtProperty = ormProp;
 				}
 				else if ( upd == ormProp.name )
 				{
+					ormProp.isReadOnly = true;
 					_updatedAtProperty = ormProp;
 				}
 				else if ( del == ormProp.name )
 				{
+					ormProp.isReadOnly = true;
 					_deletedAtProperty = ormProp;
 				}
 			}

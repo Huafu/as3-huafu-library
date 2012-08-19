@@ -32,6 +32,10 @@ package com.huafu.sql.orm
 		 */
 		private var _columnType : String;
 		/**
+		 * The size of the column data type in the database
+		 */
+		private var _columnTypeSize : Number;
+		/**
 		 * The ORM descriptor owning this property
 		 */
 		private var _ormDescriptor : ORMDescriptor;
@@ -54,8 +58,9 @@ package com.huafu.sql.orm
 		 * @param columnName The name of the column in the database
 		 * @param columnType The type of the column
 		 * @param nullable If the property can be null or not
+		 * @param columnDataLength The column's data length
 		 */
-		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String, columnName : String = null, columnType : String = null, nullable : Boolean = false )
+		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String, columnName : String = null, columnType : String = null, nullable : Boolean = false, columnDataLength : Number = 0 )
 		{
 			_ormDescriptor = ormDescriptor;
 			_name = name;
@@ -64,6 +69,7 @@ package com.huafu.sql.orm
 			_typeClass = getDefinitionByName(type) as Class;
 			_columnName = columnName || StringUtil.unCamelize(name);
 			_columnType = columnType || type.split("::").pop().toString();
+			_columnTypeSize = columnDataLength;
 			if ( _columnType == "ByteArray")
 			{
 				_columnType = "BLOB";
@@ -79,6 +85,10 @@ package com.huafu.sql.orm
 			else if ( _columnType in ["Number", "Float"] )
 			{
 				_columnType = "FLOAT";
+			}
+			else if ( _columnType == "String" )
+			{
+				_columnType = (_columnTypeSize == 0) ? "TEXT" : "VARCHAR";
 			}
 			_readOnly = false;
 		}
@@ -99,6 +109,24 @@ package com.huafu.sql.orm
 		public function get columnName() : String
 		{
 			return _columnName;
+		}
+		
+		
+		/**
+		 * The type of data of the column
+		 */
+		public function get columnDataType() : String
+		{
+			return _columnType;
+		}
+		
+		
+		/**
+		 * The data length of the column
+		 */
+		public function columnDataLength() : Number
+		{
+			return _columnTypeSize;
 		}
 		
 		
@@ -147,8 +175,9 @@ package com.huafu.sql.orm
 				meta : ReflectionMetadata = property.uniqueMetadata("Column"),
 				columnName : String = meta.argValueString("name"),
 				columnType : String = meta.argValueString("type"),
-				nullable : Boolean = meta.argValueBoolean("nullable", false);
-			return new ORMPropertyDescriptor(ownerOrm, name, type, columnName, columnType, nullable);
+				nullable : Boolean = meta.argValueBoolean("nullable", false),
+				columnTypeSize : Number = meta.argValueNumber("size", 0);
+			return new ORMPropertyDescriptor(ownerOrm, name, type, columnName, columnType, nullable, columnTypeSize);
 		}
 	}
 }
