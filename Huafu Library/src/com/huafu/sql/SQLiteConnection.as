@@ -215,7 +215,7 @@ package com.huafu.sql
 		 */
 		public static function instance( name : String = null ) : SQLiteConnection
 		{
-			if ( arguments.length < 1 )
+			if ( !name )
 			{
 				name = defaultConnectionName;
 			}
