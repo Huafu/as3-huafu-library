@@ -140,6 +140,22 @@ package com.huafu.utils
 		
 		
 		/**
+		 * Return all values in an array
+		 * 
+		 * @return An array with all values that have been set so far
+		 */
+		public function toArray() : Array
+		{
+			var o : *, res : Array = new Array();
+			for each ( o in _data )
+			{
+				res.push(o);
+			}
+			return res;
+		}
+		
+		
+		/**
 		 * @copy #unset
 		 */
 		flash_proxy override function deleteProperty( name : * ) : Boolean
