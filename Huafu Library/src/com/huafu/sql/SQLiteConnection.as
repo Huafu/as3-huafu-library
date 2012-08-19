@@ -7,6 +7,7 @@ package com.huafu.sql
 	import flash.data.SQLSchemaResult;
 	import flash.data.SQLTableSchema;
 	import flash.errors.IllegalOperationError;
+	import flash.errors.SQLError;
 	import flash.filesystem.File;
 	import flash.net.Responder;
 	import flash.utils.Dictionary;
@@ -85,7 +86,7 @@ package com.huafu.sql
 		/**
 		 * Auto open the connection
 		 */
-		public function autoOpen() : SQLConnection
+		public function autoOpen() : void
 		{
 			var file : File;
 			if ( !connected )
@@ -93,7 +94,6 @@ package com.huafu.sql
 				file = File.applicationStorageDirectory.resolvePath(_name + ".sqlite");
 				open(file);
 			}
-			return super;
 		}
 		
 		
@@ -128,7 +128,8 @@ package com.huafu.sql
 		 */
 		override public function begin( option : String = null, responder : Responder = null ) : void
 		{
-			autoOpen().begin(option, responder);
+			autoOpen();
+			super.begin(option, responder);
 		}
 		
 		
@@ -139,9 +140,23 @@ package com.huafu.sql
 		override public function loadSchema( type : Class = null, name : String = null, database : String = "main", includeColumnSchema : Boolean = true, responder : Responder = null ) : void
 		{
 			var sTable : SQLTableSchema;
-			autoOpen().loadSchema(type, name, database, includeColumnSchema, responder);
-			_cachedSchema = getSchemaResult();
+			autoOpen();
+			_cachedSchema = null;
 			_tableSchemas = new HashMap();
+			try
+			{
+				super.loadSchema(type, name, database, includeColumnSchema, responder);
+			}
+			catch ( err : SQLError )
+			{
+				// forget the "No schema objects in database 'xxx' were found." error
+				if ( err.errorID != 3115 || err.detailID != 1010 )
+				{
+					throw err;
+				}
+				return;
+			}
+			_cachedSchema = getSchemaResult();
 			for each ( sTable in _cachedSchema.tables )
 			{
 				_tableSchemas.set(sTable.database + "." + sTable.name, sTable);
