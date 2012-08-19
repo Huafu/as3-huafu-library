@@ -284,6 +284,9 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * The SQL creation code of the table related to this model
+		 */
 		public function get sqlCreationCode() : String
 		{
 			var cols : Array = new Array(),
