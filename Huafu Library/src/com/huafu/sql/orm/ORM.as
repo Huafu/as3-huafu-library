@@ -630,7 +630,7 @@ package com.huafu.sql.orm
 			{
 				orm.find(id);
 			}
-			return orm;
+			return orm.objectProxy;
 		}
 	}
 }
