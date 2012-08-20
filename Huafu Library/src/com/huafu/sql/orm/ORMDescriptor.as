@@ -209,7 +209,7 @@ package com.huafu.sql.orm
 			if ( (schema = connection.getTableSchema(tableName)) )
 			{
 				// the table exists, check if the schema is the same
-				//TODO: check th table's columns and alter if needed
+				//TODO: check the table's columns and alter if needed
 			}
 			else
 			{
