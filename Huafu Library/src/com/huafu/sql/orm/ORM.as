@@ -533,6 +533,15 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * The proxy of this object, IE where to read and write properties to
+		 */
+		public function get objectProxy() : ObjectProxy
+		{
+			return _objectProxy;
+		}
+		
+		
+		/**
 		 * Whether the object has been changed
 		 */
 		public function get hasChanged() : Boolean
@@ -604,6 +613,24 @@ package com.huafu.sql.orm
 			_hasChanged = new Array();
 			loadDataFromSqlResult({}, false);
 			updateHandlerEnabled = true;
+		}
+		
+		
+		/**
+		 * Create a new instance of the given ORM model
+		 * 
+		 * @param ormClass The class of the ORM instance to create
+		 * @param id The unique ID, if given it'll load from the db the row with that ID
+		 * @return The ORM object to be sued
+		 */
+		public static function factory( ormClass : Class, id : int = 0 ) : *
+		{
+			var orm : ORM = new ormClass();
+			if ( id > 0 )
+			{
+				orm.find(id);
+			}
+			return orm;
 		}
 	}
 }
