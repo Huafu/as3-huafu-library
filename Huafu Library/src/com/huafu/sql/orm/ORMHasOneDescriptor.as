@@ -98,7 +98,7 @@ package com.huafu.sql.orm
 			var res : ORM, id : int = resultRow[columnName];
 			if ( id )
 			{
-				res = new relatedOrmClass();
+				res = ORM.factory(relatedOrmClass);
 				if ( !res.find(id) )
 				{
 					res = null;
