@@ -9,6 +9,7 @@ package com.huafu.sql.orm
 	import flash.errors.IllegalOperationError;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.utils.Proxy;
 	import flash.utils.getDefinitionByName;
 	
 	import mx.events.PropertyChangeEvent;
@@ -48,7 +49,7 @@ package com.huafu.sql.orm
 	 * 	// The Table metadata has to be present, but any of the arguments here are the default values so
 	 * 	// no need to put them if you inten to use the same values
 	 * 	[Table(name="user", database="main", primaryKey="id", connection="main", createdDate="cretaedAt", updatedDate="updatedAt", deletedDate="deletedAt")]
-	 * 	public class User extends ORM
+	 * 	public class User
 	 * 	{
 	 * 		// Also here the Column metadatas have to be present but hte arguments are the default values
 	 * 		// so if you intend to use the same values you don't need to put them (the type, if not set,
@@ -90,13 +91,18 @@ package com.huafu.sql.orm
 	 * 			// model Tag so as3 will know about it already
 	 * 			UserTag;
 	 * 			Tag;
-	 * 			super();
 	 * 		}
 	 * 	}
 	 * </listing>
 	 */
-	public class ORM extends EventDispatcher
+	public dynamic class ORM extends ObjectProxy
 	{
+		/**
+		 * Used to avoid the coder to instanciate directly the class without using the factory static method
+		 */
+		private static var _dummyChecker : Object = {uid: "xxxx"};
+		
+		
 		/**
 		 * Stores the default database name of any table without database name defined
 		 */
@@ -107,9 +113,9 @@ package com.huafu.sql.orm
 		 */
 		private var _descriptor : ORMDescriptor;
 		/**
-		 * The proxy used to observe changes on this object
+		 * Stores the real data
 		 */
-		private var _objectProxy : ObjectProxy;
+		private var _data : *;
 		/**
 		 * Finds whether the object has been loaded or not
 		 */
@@ -131,10 +137,6 @@ package com.huafu.sql.orm
 		 */
 		private var _classQName : String;
 		/**
-		 * Used to know if the update handler should process anything or not
-		 */
-		private var _updateHandlerEnabled : int;
-		/**
 		 * Used to saved the last loaded data
 		 */
 		private var _lastLoadedData : Object;
@@ -144,15 +146,20 @@ package com.huafu.sql.orm
 		private var _connection : SQLiteConnection;
 		
 		
-		public function ORM()
-		{	
-			_objectProxy = new ObjectProxy(this);
-			_descriptor = ORMDescriptor.forObject(this);
-			_updateHandlerEnabled = 1;
+		public function ORM( ormClass : Class, _dummy : Object )
+		{
+			_data = new ormClass();
+			super(_data);
+			if ( _dummy !== _dummyChecker )
+			{
+				throw new IllegalOperationError("You MUST use the ORM.factory() method to instanciate an ORM object");
+			}
+			_class = ormClass;
+			_descriptor = ORMDescriptor.forClass(ormClass);
 			_reset();
 			
 			// listen to changes on the properties
-			_objectProxy.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, _propertyChangeHandler);
+			addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, _propertyChangeHandler);
 		}
 		
 		
@@ -193,21 +200,16 @@ package com.huafu.sql.orm
 		public function loadDataFromSqlResult( result : Object, flagAsLoaded : Boolean = true ) : void
 		{
 			var name : String;
-			updateHandlerEnabled = false;
 			// copy the data from the given result row to the last loaded data
-			if ( flagAsLoaded )
+			_lastLoadedData = new Object();
+			for ( name in result )
 			{
-				_lastLoadedData = new Object();
-				for ( name in result )
-				{
-					_lastLoadedData[name] = result[name];
-				}
+				_lastLoadedData[name] = result[name];
 			}
-			ormDescriptor.sqlResultRowToOrmObject(result, this);
+			ormDescriptor.sqlResultRowToOrmObject(result, this, _data);
 			_isLoaded = flagAsLoaded;
 			_isSaved = flagAsLoaded;
 			_hasChanged = new Array();
-			updateHandlerEnabled = true;
 		}
 		
 		
@@ -277,7 +279,7 @@ package com.huafu.sql.orm
 			stmt = connection.createStatement(sql);
 			stmt.bind(binds);
 			stmt.safeExecute();
-			return new ORMIterator(classRef, stmt);
+			return new ORMIterator(ormClass, stmt);
 		}
 		
 		
@@ -314,7 +316,7 @@ package com.huafu.sql.orm
 			stmt = connection.createStatement(sql, true);
 			stmt.bind(params || {});
 			stmt.safeExecute();
-			return new ORMIterator(classRef, stmt);
+			return new ORMIterator(ormClass, stmt);
 		}
 		
 		
@@ -340,20 +342,18 @@ package com.huafu.sql.orm
 				{
 					return true;
 				}
-				updateHandlerEnabled = true;
 				if ( ormDescriptor.updatedAtProperty )
 				{
-					this[ormDescriptor.updatedAtProperty.name] = new Date();
+					_data[ormDescriptor.updatedAtProperty.name] = new Date();
 					_hasChanged.push(ormDescriptor.updatedAtProperty.name);
 				}
-				updateHandlerEnabled = false;
 				// create the sql statement
 				sql = "UPDATE " + ormDescriptor.tableName + " SET ";
 				parts = new Array();
 				for each ( name in _hasChanged )
 				{
 					parts.push(ormDescriptor.propertyDescriptor(name).columnName + " = :" + name);
-					params[name] = this[name];
+					params[name] = _data[name];
 				}
 				sql += parts.join(", ") + " WHERE " + primaryKeyColumnName
 					+ " = :" + primaryKeyPropertyName;
@@ -375,17 +375,15 @@ package com.huafu.sql.orm
 			else
 			{
 				// insert
-				updateHandlerEnabled = false
 				if ( ormDescriptor.createdAtProperty )
 				{
-					this[ormDescriptor.createdAtProperty.name] = new Date();
+					_data[ormDescriptor.createdAtProperty.name] = new Date();
 				}
 				if ( ormDescriptor.updatedAtProperty )
 				{
-					this[ormDescriptor.updatedAtProperty.name] = new Date();
+					_data[ormDescriptor.updatedAtProperty.name] = new Date();
 				}
 				_hasChanged.push(ormDescriptor.createdAtProperty.name, ormDescriptor.updatedAtProperty.name);
-				updateHandlerEnabled = true;
 				
 				// creates the SQL
 				sql = " INSERT INTO " + ormDescriptor.tableName + "(";
@@ -393,7 +391,7 @@ package com.huafu.sql.orm
 				for each ( name in _hasChanged )
 				{
 					parts.push(ormDescriptor.propertyDescriptor(name).columnName);
-					params[name] = this[name];
+					params[name] = _data[name];
 				}
 				sql += parts.join(", ") + ") VALUES(:" + _hasChanged.join(", :") + ")";
 				
@@ -404,9 +402,7 @@ package com.huafu.sql.orm
 				res = stmt.getResult();
 				if ( res.rowsAffected == 1 )
 				{
-					updateHandlerEnabled = false;
-					this[primaryKeyPropertyName] = res.lastInsertRowID;
-					updateHandlerEnabled = true;
+					_data[primaryKeyPropertyName] = res.lastInsertRowID;
 					_isSaved = true;
 					_hasChanged = new Array();
 					ev = new ORMEvent(ORMEvent.SAVED);
@@ -457,7 +453,7 @@ package com.huafu.sql.orm
 		 */
 		public function get primaryKeyValue() : int
 		{
-			return this[primaryKeyPropertyName];
+			return _data[primaryKeyPropertyName];
 		}
 		
 		
@@ -486,7 +482,7 @@ package com.huafu.sql.orm
 		{
 			if ( !_classQName )
 			{
-				_classQName = getQualifiedClassName(this);
+				_classQName = getQualifiedClassName(_data);
 			}
 			return _classQName;
 		}
@@ -495,12 +491,8 @@ package com.huafu.sql.orm
 		/**
 		 * A pointer to the class of this object
 		 */
-		public function get classRef() : Class
+		public function get ormClass() : Class
 		{
-			if ( !_class )
-			{
-				_class = getDefinitionByName(classQName) as Class;
-			}
 			return _class;
 		}
 		
@@ -533,29 +525,11 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * The proxy of this object, IE where to read and write properties to
-		 */
-		public function get objectProxy() : ObjectProxy
-		{
-			return _objectProxy;
-		}
-		
-		
-		/**
 		 * Whether the object has been changed
 		 */
 		public function get hasChanged() : Boolean
 		{
 			return (_hasChanged.length > 0);
-		}
-		
-		
-		/**
-		 * Enable or disable the update handler
-		 */
-		private function set updateHandlerEnabled( value : Boolean ) : void
-		{
-			_updateHandlerEnabled += value ? 1 : -1;
 		}
 		
 		
@@ -566,14 +540,20 @@ package com.huafu.sql.orm
 		 */
 		private function _propertyChangeHandler( event : PropertyChangeEvent ) : void
 		{
-			if ( _updateHandlerEnabled < 1 || event.kind != PropertyChangeEventKind.UPDATE )
+			if ( event.kind != PropertyChangeEventKind.UPDATE )
 			{
-				return;
+				throw new IllegalOperationError("You cannot " + event.kind + " a property on an ORM model");
 			}
-			var prop : ORMPropertyDescriptor = _descriptor.propertyDescriptor(event.property.toString());
+			var pName : String = event.property.toString(),
+				prop : ORMPropertyDescriptor = _descriptor.propertyDescriptor(pName);
 			if ( !prop )
 			{
-				return;
+				if ( _descriptor.getRelatedTo(pName) )
+				{
+					return;
+				}
+				throw new IllegalOperationError("Trying to access a unknown property '"
+					+ pName + "'. Define it first in the model if you wish to use it in your code if that is a column of the related table.");
 			}
 			// here it's a property of the ORM that has changed
 			if ( prop.isReadOnly )
@@ -585,9 +565,7 @@ package com.huafu.sql.orm
 			// if the event has been cancelled, don't do the update
 			if ( ev.isDefaultPrevented() )
 			{
-				updateHandlerEnabled = false;
-				this[prop.name] = event.oldValue;
-				updateHandlerEnabled = true;
+				_data[prop.name] = event.oldValue;
 			}
 			else
 			{
@@ -595,7 +573,7 @@ package com.huafu.sql.orm
 				_isLoaded = false;
 				if ( _hasChanged.indexOf(prop.name) == -1 )
 				{
-					_hasChanged.push(prop.name, true);
+					_hasChanged.push(prop.name);
 				}
 			}
 		}
@@ -606,13 +584,11 @@ package com.huafu.sql.orm
 		 */
 		private function _reset() : void
 		{
-			updateHandlerEnabled = false;
 			_isLoaded = false;
 			_isSaved = false;
 			_lastLoadedData = null;
 			_hasChanged = new Array();
 			loadDataFromSqlResult({}, false);
-			updateHandlerEnabled = true;
 		}
 		
 		
@@ -625,12 +601,12 @@ package com.huafu.sql.orm
 		 */
 		public static function factory( ormClass : Class, id : int = 0 ) : *
 		{
-			var orm : ORM = new ormClass();
+			var orm : ORM = new ORM(ormClass, _dummyChecker);
 			if ( id > 0 )
 			{
 				orm.find(id);
 			}
-			return orm.objectProxy;
+			return orm;
 		}
 	}
 }

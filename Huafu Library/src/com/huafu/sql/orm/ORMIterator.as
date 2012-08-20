@@ -80,7 +80,7 @@ package com.huafu.sql.orm
 		{
 			if ( !_ormInstance )
 			{
-				_ormInstance = new _ormClass();
+				_ormInstance = ORM.factory(_ormClass);
 			}
 			return _ormInstance;
 		}
@@ -143,7 +143,7 @@ package com.huafu.sql.orm
 			var res : ORM;
 			if ( !(_data[index] is ORM) )
 			{
-				res = new _ormClass();
+				res = ORM.factory(_ormClass);
 				res.loadDataFromSqlResult(_data[index]);
 				_data[index] = res;
 			}

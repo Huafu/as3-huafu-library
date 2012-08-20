@@ -265,8 +265,9 @@ package com.huafu.sql.orm
 		 * 
 		 * @param result The row as an object to load in the ORM object
 		 * @param object The ORM object to load results in
+		 * @param dataObject The data object of the ORM object
 		 */
-		public function sqlResultRowToOrmObject( result : Object, object : ORM ) : void
+		public function sqlResultRowToOrmObject( result : Object, object : ORM, dataObject : Object ) : void
 		{
 			var prop : ORMPropertyDescriptor, relation : IORMRelationDescriptor;
 			// load normal properties
@@ -274,11 +275,11 @@ package com.huafu.sql.orm
 			{
 				if ( result.hasOwnProperty(prop.columnName) )
 				{
-					object[prop.name] = result[prop.columnName];
+					dataObject[prop.name] = result[prop.columnName];
 				}
 				else
 				{
-					object[prop.name] = undefined;
+					dataObject[prop.name] = undefined;
 				}
 			}
 			// prepare for relation properties
@@ -394,7 +395,7 @@ package com.huafu.sql.orm
 			var descriptor : ORMDescriptor = _allByClassQName.get(ormObject.classQName);
 			if ( !descriptor )
 			{
-				descriptor = new ORMDescriptor(ormObject.classRef);
+				descriptor = new ORMDescriptor(ormObject.ormClass);
 			}
 			return descriptor;
 		}
