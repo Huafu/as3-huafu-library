@@ -93,6 +93,11 @@ package com.huafu.sql.orm
 	 * 			Tag;
 	 * 		}
 	 * 	}
+	 * 
+	 * // then to use it, you have to use the factory method:
+	 * var myUser : ORM = ORM.factory(User);
+	 * // or to load one user with his id:
+	 * var myUser : ORM = ORM.factory(User, 12);
 	 * </listing>
 	 */
 	public dynamic class ORM extends ObjectProxy
@@ -335,6 +340,7 @@ package com.huafu.sql.orm
 			{
 				return false;
 			}
+			// TODO: save the relation too
 			if ( primaryKeyValue )
 			{
 				// update
