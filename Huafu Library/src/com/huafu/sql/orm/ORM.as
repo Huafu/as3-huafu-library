@@ -381,7 +381,7 @@ package com.huafu.sql.orm
 				stmt = connection.createStatement(sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
-				if ( stmt.getResult().rowsAffected > 0 )
+				if ( stmt.getResult().rowsAffected == 1 )
 				{
 					_isSaved = true;
 					_hasChanged = new Array();
