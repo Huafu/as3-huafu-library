@@ -257,8 +257,15 @@ package com.huafu.sql.orm
 				}
 				name = nameParts[0];
 				prop = ormDescriptor.propertyDescriptor(name);
-				_params.push(prop.columnName + " " + op + " :" + name);
-				binds[name] = value;
+				if ( value === null )
+				{
+					_params.push(prop.columnName + " IS" + (op == "!=" ? " NOT" : "") + " NULL");
+				}
+				else
+				{
+					_params.push(prop.columnName + " " + op + " :" + name);
+					binds[name] = value;
+				}
 			}
 			if ( _params.length > 0 )
 			{
