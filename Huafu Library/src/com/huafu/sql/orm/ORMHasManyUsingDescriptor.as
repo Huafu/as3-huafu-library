@@ -96,7 +96,7 @@ package com.huafu.sql.orm
 					+ usingOrmDescriptor.tableName + " AS u WHERE u." + relationToRelated.columnName + " = "
 					+ relationToRelated.relatedColumnName + " AND u." + relationToMe.columnName + " = :"
 					+ columnName;
-				stmt = relatedOrmDescriptor.connection.createStatement(sql);
+				stmt = relatedOrmDescriptor.connection.createStatement(ORM.PREPEND_SQL_COMMENT + sql);
 				stmt.bind(columnName, null);
 				iterator = new ORMIterator(relatedOrmClass, stmt, dataObject);
 				dataObject[propertyName] = iterator;
