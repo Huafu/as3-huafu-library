@@ -2,13 +2,37 @@ package com.huafu.sql.orm
 {
 	import com.huafu.sql.SQLiteStatement;
 
+	/**
+	 * Describe and handle a "has many using" relation property in a model
+	 */
 	public class ORMHasManyUsingDescriptor extends ORMHasOneDescriptor implements IORMRelationDescriptor
 	{
+		/**
+		 * The ORM class that describe the table used to make the relations
+		 */
 		private var _usingOrmClass: Class;
+		/**
+		 * The ORM descriptor of the "using" table
+		 */
 		private var _usingOrmDescriptor : ORMDescriptor;
+		/**
+		 * The relation in the "using" table to the ORM descriptor holding this relation
+		 */
 		private var _relationToMe : ORMHasOneDescriptor;
+		/**
+		 * The relation in the "using" table to the related ORM descriptor
+		 */
 		private var _relationToRelated : ORMHasOneDescriptor;
 		
+		
+		/**
+		 * Creates a "has many using" relation
+		 * 
+		 * @param ormDescriptor The ORM descriptor holding the relation
+		 * @param propertyName The name of the proeprty holding the relation
+		 * @param relatedOrmClass The ORM class that will give this relation
+		 * @param usingOrmClass The class of the ORM object that holds relation informations
+		 */
 		public function ORMHasManyUsingDescriptor( ormDescriptor : ORMDescriptor, propertyName : String, relatedOrmClass : Class, usingOrmClass : Class )
 		{
 			super(ormDescriptor, propertyName, relatedOrmClass, false, ormDescriptor.primaryKeyProperty.columnName);
@@ -16,6 +40,9 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * The ORM descriptor of the "using" table
+		 */
 		public function get usingOrmDescriptor() : ORMDescriptor
 		{
 			if ( !_usingOrmDescriptor )
@@ -26,6 +53,9 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * The relation in the "using" table to the ORM descriptor holding this relation
+		 */
 		public function get relationToMe() : ORMHasOneDescriptor
 		{
 			if ( !_relationToMe )
@@ -36,6 +66,9 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * The relation in the "using" table to the related ORM descriptor
+		 */
 		public function get relationToRelated() : ORMHasOneDescriptor
 		{
 			if ( !_relationToRelated )
