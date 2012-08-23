@@ -91,12 +91,15 @@ package com.huafu.sql.orm
 			var iterator : ORMIterator, stmt : SQLiteStatement, sql : String;
 			if ( !dataObject[propertyName] )
 			{
+				relatedOrmDescriptor.globalOrmInstance.excludeSoftDeleted = usingOrmDescriptor.globalOrmInstance.excludeSoftDeleted = ormObject.excludeSoftDeleted;
 				sql = "SELECT r.*, u." + usingOrmDescriptor.primaryKeyProperty.columnName
 					+ " AS __using_pk_value FROM " + relatedOrmDescriptor.tableName + " AS r, "
 					+ usingOrmDescriptor.tableName + " AS u WHERE u." + relationToRelated.columnName + " = "
 					+ relationToRelated.relatedColumnName + " AND u." + relationToMe.columnName + " = :"
-					+ columnName;
-				stmt = relatedOrmDescriptor.connection.createStatement(sql);
+					+ columnName
+					+ relatedOrmDescriptor.globalOrmInstance.getDeletedCondition(" AND ")
+					+ usingOrmDescriptor.globalOrmInstance.getDeletedCondition(" AND ");
+				stmt = relatedOrmDescriptor.connection.createStatement(ORM.PREPEND_SQL_COMMENT + sql);
 				stmt.bind(columnName, null);
 				iterator = new ORMIterator(relatedOrmClass, stmt, dataObject);
 				dataObject[propertyName] = iterator;

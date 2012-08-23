@@ -71,8 +71,11 @@ package com.huafu.sql.orm
 			{
 				return;
 			}
-			sql = "SELECT * FROM " + relatedOrmDescriptor.tableName + " WHERE " + relatedColumnName + " = :" + propertyName;
-			stmt = ormObject.connection.createStatement(sql, true);
+			ormDescriptor.globalOrmInstance.excludeSoftDeleted = ormObject.excludeSoftDeleted;
+			sql = "SELECT * FROM " + relatedOrmDescriptor.tableName + " WHERE "
+				+ relatedColumnName + " = :" + propertyName
+				+ ormDescriptor.globalOrmInstance.getDeletedCondition(" AND ");
+			stmt = ormObject.connection.createStatement(ORM.PREPEND_SQL_COMMENT + sql, true);
 			// set the parameter to something so that the ORMIterator can detect it and bind it
 			stmt.bind(propertyName, null);
 			res = new ORMIterator(ormDescriptor.ormClass, stmt, dataObject);
