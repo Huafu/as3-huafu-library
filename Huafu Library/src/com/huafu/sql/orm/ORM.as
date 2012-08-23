@@ -189,7 +189,7 @@ package com.huafu.sql.orm
 				stmt : SQLiteStatement;
 			sql = "SELECT * FROM " + ormDescriptor.tableName
 				+ " WHERE " + primaryKeyColumnName + " = :" + primaryKeyPropertyName
-				+ _getDeletedCondition(" AND ");
+				+ getDeletedCondition(" AND ");
 			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql);
 			_reset();
 			stmt.bind(primaryKeyPropertyName, id);
@@ -255,7 +255,7 @@ package com.huafu.sql.orm
 				nameParts : Array, op : String, stmt : SQLiteStatement, binds : Object = {},
 				deletedCondition : String;
 			
-			if ( (deletedCondition = _getDeletedCondition()) )
+			if ( (deletedCondition = getDeletedCondition()) )
 			{
 				_params.push(deletedCondition);
 			}
@@ -326,7 +326,7 @@ package com.huafu.sql.orm
 		{
 			var sql : String = "SELECT * FROM " + ormDescriptor.tableName,
 				stmt : SQLiteStatement,
-				newWhere : String = _getDeletedCondition(null, whereSql ? " AND " : null) + (whereSql ? whereSql : "");
+				newWhere : String = getDeletedCondition(null, whereSql ? " AND " : null) + (whereSql ? whereSql : "");
 			if ( whereSql && whereSql != "" )
 			{
 				sql += " WHERE " + whereSql;
@@ -698,7 +698,7 @@ package com.huafu.sql.orm
 		 * @param append The string to append to the condition
 		 * @return The condition SQL code if any else an empty string
 		 */
-		private function _getDeletedCondition( prepend : String = null, append : String = null ) : String
+		public function getDeletedCondition( prepend : String = null, append : String = null ) : String
 		{
 			var res : String;
 			if ( !excludeSoftDeleted || !ormDescriptor.deletedAtProperty )
