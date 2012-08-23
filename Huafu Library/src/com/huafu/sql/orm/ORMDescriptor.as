@@ -456,5 +456,32 @@ package com.huafu.sql.orm
 		{
 			return _allByClassQName.toArray();
 		}
+		
+		
+		/**
+		 * Resolve a model name to the class object corresponding
+		 * 
+		 * @param className The name of the model's class
+		 * @param fromOrm The ORM descriptor from which trying to resolve from
+		 * @return The pointer to the ORM class
+		 */
+		public static function resolveOrmClass( className : String, fromOrm : ORMDescriptor ) : Class
+		{
+			var fullCN : String = ORMDescriptor.ormModelsPackageFullName + "::" + className,
+				ormClass : Class;
+			try
+			{
+				ormClass = getDefinitionByName(fullCN) as Class;
+			}
+			catch ( err : ReferenceError )
+			{
+				if ( err.errorID == 1065 )
+				{
+					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.ormClass) + "', it should solve the problem.";
+				}
+				throw err;
+			}
+			return ormClass;
+		}
 	}
 }
