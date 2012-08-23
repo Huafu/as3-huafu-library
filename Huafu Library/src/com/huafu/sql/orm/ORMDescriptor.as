@@ -233,6 +233,27 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Get the relation object that correspond to the link with a given ORM
+		 *
+		 * @param toWhat The ORM descriptor we want the relation object of
+		 * @param relationClass If specified, it'll look for a relation having strictly the given class
+		 * @return Returns the desired relation or null if no such defined
+		 */
+		public function getRelationTo( toWhat : ORMDescriptor, relationClass : Class = null ) : IORMRelationDescriptor
+		{
+			var rel : IORMRelationDescriptor;
+			for each ( rel in _relatedTo )
+			{
+				if ( rel.relatedOrmDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel, relationClass)) )
+				{
+					return rel;
+				}
+			}
+			return null;
+		}
+		
+		
+		/**
 		 * The updatedAt property if any
 		 */
 		public function get updatedAtProperty() : ORMPropertyDescriptor
