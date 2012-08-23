@@ -103,6 +103,11 @@ package com.huafu.sql.orm
 	public dynamic class ORM extends ObjectProxy
 	{
 		/**
+		 * The SQL comment prepended to each statement to be sure to have independant SQL staetment cache
+		 */
+		public static const PREPEND_SQL_COMMENT : String = "/*HORM*/ ";
+
+		/**
 		 * Used to avoid the coder to instanciate directly the class without using the factory static method
 		 */
 		private static var _dummyChecker : Object = {uid: "xxxx"};
@@ -150,9 +155,12 @@ package com.huafu.sql.orm
 		 */
 		private var _connection : SQLiteConnection;
 		
+		public var excludeSoftDeleted : Boolean;
+		
 		
 		public function ORM( ormClass : Class, _dummy : Object )
 		{
+			excludeSoftDeleted = true;
 			_data = new ormClass();
 			super(_data);
 			if ( _dummy !== _dummyChecker )
@@ -177,9 +185,12 @@ package com.huafu.sql.orm
 		public function find( id : int ) : Boolean
 		{
 			var res : SQLResult, ev : ORMEvent,
-				stmt : SQLiteStatement = connection.createStatement(
-				"SELECT * FROM " + ormDescriptor.tableName
-				+ " WHERE " + primaryKeyColumnName + " = :" + primaryKeyPropertyName);
+				sql : String,
+				stmt : SQLiteStatement;
+			sql = "SELECT * FROM " + ormDescriptor.tableName
+				+ " WHERE " + primaryKeyColumnName + " = :" + primaryKeyPropertyName
+				+ getDeletedCondition(" AND ");
+			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql);
 			_reset();
 			stmt.bind(primaryKeyPropertyName, id);
 			stmt.safeExecute();
@@ -241,8 +252,13 @@ package com.huafu.sql.orm
 		{
 			var sql : String = "SELECT * FROM " + ormDescriptor.tableName, value : *,
 				_params : Array = new Array(), name : String, prop : ORMPropertyDescriptor,
-				nameParts : Array, op : String, stmt : SQLiteStatement, binds : Object = {};
+				nameParts : Array, op : String, stmt : SQLiteStatement, binds : Object = {},
+				deletedCondition : String;
 			
+			if ( (deletedCondition = getDeletedCondition()) )
+			{
+				_params.push(deletedCondition);
+			}
 			for ( name in (params || {}) )
 			{
 				value = params[name];
@@ -288,7 +304,7 @@ package com.huafu.sql.orm
 			{
 				sql += " LIMIT " + limit + ", " + offset;
 			}
-			stmt = connection.createStatement(sql);
+			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql);
 			stmt.bind(binds);
 			stmt.safeExecute();
 			return new ORMIterator(ormClass, stmt);
@@ -308,8 +324,10 @@ package com.huafu.sql.orm
 		 */
 		public function findAllBySql( whereSql : String, params : Object = null, orderBySql : String = null, groupBySql : String = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
-			var sql : String = "SELECT * FROM " + ormDescriptor.tableName, stmt : SQLiteStatement;
-			if ( whereSql )
+			var sql : String = "SELECT * FROM " + ormDescriptor.tableName,
+				stmt : SQLiteStatement,
+				newWhere : String = getDeletedCondition(null, whereSql ? " AND " : null) + (whereSql ? whereSql : "");
+			if ( whereSql && whereSql != "" )
 			{
 				sql += " WHERE " + whereSql;
 			}
@@ -325,7 +343,7 @@ package com.huafu.sql.orm
 			{
 				sql += " LIMIT " + limit + ", " + offset;
 			}
-			stmt = connection.createStatement(sql, true);
+			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
 			stmt.bind(params || {});
 			stmt.safeExecute();
 			return new ORMIterator(ormClass, stmt);
@@ -385,7 +403,7 @@ package com.huafu.sql.orm
 				params[primaryKeyPropertyName] = primaryKeyValue;
 				
 				// execute the sql
-				stmt = connection.createStatement(sql, true);
+				stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
 				if ( stmt.getResult().rowsAffected == 1 )
@@ -432,7 +450,7 @@ package com.huafu.sql.orm
 				sql += parts.join(", ") + ") VALUES(:" + _hasChanged.join(", :") + ")";
 				
 				// execute sql
-				stmt = connection.createStatement(sql, true);
+				stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
 				res = stmt.getResult();
@@ -570,6 +588,54 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Whether a record is soft deleted or not
+		 */
+		public function get isDeleted() : Boolean
+		{
+			if ( !ormDescriptor.deletedAtProperty )
+			{
+				throw new IllegalOperationError("You cannot test if a record is deleted if the model doesn't include a 'deletedDate' column (has to be defined in the [Table] metadata)");
+			}
+			return (_data[ormDescriptor.deletedAtProperty.name] != null);
+		}
+		
+		
+		/**
+		 * Delete the record from the DB and reset this object or flag the record as soft
+		 * deleted and save the flag in the db
+		 * 
+		 * @return Returns true if the record has been deleted, else false
+		 */
+		public function remove() : Boolean
+		{
+			var stmt : SQLiteStatement, res : Boolean;
+			if ( ormDescriptor.deletedAtProperty )
+			{
+				if ( isDeleted )
+				{
+					throw new IllegalOperationError("The record is already flagged as deleted");
+				}
+				_data[ormDescriptor.deletedAtProperty.name] = new Date();
+				_hasChanged.push(ormDescriptor.deletedAtProperty.name);
+				return save();
+			}
+			if ( !primaryKeyValue )
+			{
+				throw new IllegalOperationError("The record has no PK value, it cannot be deleted");
+			}
+			stmt = connection.createStatement(PREPEND_SQL_COMMENT + "DELETE FROM " + ormDescriptor.tableName + " WHERE "
+				+ primaryKeyColumnName + " = :" + primaryKeyPropertyName);
+			stmt.bind(primaryKeyPropertyName, primaryKeyValue);
+			res = stmt.safeExecute() && (stmt.getResult().rowsAffected == 1);
+			if ( res )
+			{
+				_reset();
+			}
+			return res;
+		}
+		
+		
+		/**
 		 * Handle a change on a property of this object
 		 * 
 		 * @param event The change event
@@ -622,6 +688,25 @@ package com.huafu.sql.orm
 			_lastLoadedData = null;
 			_hasChanged = new Array();
 			loadDataFromSqlResult({}, false);
+		}
+		
+		
+		/**
+		 * Get the condition SQL string to handle soft deleted records
+		 * 
+		 * @param prepend The string to prepend to the condition
+		 * @param append The string to append to the condition
+		 * @return The condition SQL code if any else an empty string
+		 */
+		public function getDeletedCondition( prepend : String = null, append : String = null ) : String
+		{
+			var res : String;
+			if ( !excludeSoftDeleted || !ormDescriptor.deletedAtProperty )
+			{
+				return "";
+			}
+			return (prepend ? prepend : "") + ormDescriptor.deletedAtProperty.columnName + " IS NULL"
+				+ (append ? append : "");
 		}
 		
 		

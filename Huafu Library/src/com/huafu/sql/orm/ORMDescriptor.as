@@ -87,6 +87,10 @@ package com.huafu.sql.orm
 		 * A pointer to the deletedAt property of the ORM if any
 		 */
 		private var _deletedAtProperty : ORMPropertyDescriptor;
+		/**
+		 * A global instance needed for relations and other stuffs
+		 */
+		private var _globalOrmInstance : ORM;
 		
 		// relations
 		/**
@@ -182,6 +186,31 @@ package com.huafu.sql.orm
 			
 			// update the DB schema if necessary
 			updateDatabase();
+		}
+		
+		
+		/**
+		 * A global instance needed for relations and other stuffs
+		 */
+		public function get globalOrmInstance() : ORM
+		{
+			if ( !_globalOrmInstance )
+			{
+				_globalOrmInstance = factory();
+			}
+			return _globalOrmInstance;
+		}
+		
+		
+		/**
+		 * Creates a new ORM instance of the model described by this descriptor
+		 * 
+		 * @param id The id to auto load if needed
+		 * @return The new ORM instance
+		 */
+		public function factory( id : int = 0 ) : ORM
+		{
+			return ORM.factory(ormClass, id);
 		}
 		
 		
