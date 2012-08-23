@@ -11,9 +11,10 @@ package com.huafu.sql.orm
 		 * Called to setup an ORM object which has a relation described by a IORMRelationDescriptor
 		 * 
 		 * @param ormObject The ORM object ot setup
+		 * @param dataObject The dataObject that the ORM object holds
 		 * @param resultRow The row comming from the db that might be used to setup the object looking at the relation
 		 */
-		function setupOrmObject( ormObject : ORM, resultRow : Object ) : void;
+		function setupOrmObject( ormObject : ORM, dataObject : Object, resultRow : Object ) : void;
 		
 		/**
 		 * The SQL code used to create the column in the ORM if any
@@ -24,5 +25,15 @@ package com.huafu.sql.orm
 		 * The name of the column, if any, in the related ORM
 		 */
 		function get columnName() : String;
+		
+		/**
+		 * The related ORM descriptor for this relation
+		 */
+		function get relatedOrmDescriptor() : ORMDescriptor;
+		
+		/**
+		 * The column in the related ORM model
+		 */
+		function get relatedColumnName() : String;
 	}
 }
