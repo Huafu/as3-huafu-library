@@ -24,5 +24,15 @@ package com.huafu.sql.orm
 		 * The name of the column, if any, in the related ORM
 		 */
 		function get columnName() : String;
+		
+		/**
+		 * The related ORM descriptor for this relation
+		 */
+		function get relatedOrmDescriptor() : ORMDescriptor;
+		
+		/**
+		 * The column in the related ORM model
+		 */
+		function get relatedColumnName() : String;
 	}
 }

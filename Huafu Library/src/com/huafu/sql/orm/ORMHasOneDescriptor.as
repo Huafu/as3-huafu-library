@@ -44,6 +44,15 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * The column name in the related ORM model
+		 */
+		public function get relatedColumnName() : String
+		{
+			return relatedOrmPropertyDescriptor.columnName;
+		}
+		
+		
+		/**
 		 * Whether the relation is 0,1 or 1,1
 		 */
 		public function get nullable() : Boolean
