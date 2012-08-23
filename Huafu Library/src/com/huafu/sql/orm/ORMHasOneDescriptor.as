@@ -108,7 +108,8 @@ package com.huafu.sql.orm
 			var res : ORM, id : int = resultRow[columnName];
 			if ( id )
 			{
-				res = ORM.factory(relatedOrmClass);
+				res = relatedOrmDescriptor.factory();
+				res.excludeSoftDeleted = ormObject.excludeSoftDeleted;
 				if ( !res.find(id) )
 				{
 					res = null;
