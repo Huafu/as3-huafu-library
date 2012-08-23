@@ -61,12 +61,13 @@ package com.huafu.sql.orm
 		 * Setup the property of an ORM object looking at this realtion
 		 * 
 		 * @param ormObject The ORM object to setup property of
+		 * @param dataObject The dataObject that the ORM object holds
 		 * @param resultRow The result row object containing data for this relation
 		 */
-		public function setupOrmObject( ormObject : ORM, resultRow : Object ) : void
+		public function setupOrmObject( ormObject : ORM, dataObject : Object, resultRow : Object ) : void
 		{
 			var res : ORMIterator, stmt : SQLiteStatement, sql : String;
-			if ( ormObject[propertyName] )
+			if ( dataObject[propertyName] )
 			{
 				return;
 			}
@@ -74,8 +75,8 @@ package com.huafu.sql.orm
 			stmt = ormObject.connection.createStatement(sql, true);
 			// set the parameter to something so that the ORMIterator can detect it and bind it
 			stmt.bind(propertyName, null);
-			res = new ORMIterator(ormDescriptor.ormClass, stmt, ormObject);
-			ormObject[propertyName] = res;
+			res = new ORMIterator(ormDescriptor.ormClass, stmt, dataObject);
+			dataObject[propertyName] = res;
 		}
 	}
 }

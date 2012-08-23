@@ -229,7 +229,7 @@ package com.huafu.sql.orm
 		 * 
 		 * @example
 		 * <listing version="3.0">
-		 * 	var user : User = new User();
+		 * 	var user : User = ORM.factory(User);
 		 * 	var iterator : ORMIterator = user.findAll({"age >": 18, "deleted": false}, {name: "desc"});
 		 * 	for each ( user in iterator )
 		 * 	{

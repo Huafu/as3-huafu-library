@@ -19,6 +19,7 @@
     <classEntry path="com.huafu.sql.orm.ORMHasManyDescriptor"/>
     <classEntry path="com.huafu.sql.orm.IORMRelationDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMBelongsToDescriptor"/>
+    <classEntry path="com.huafu.sql.orm.ORMHasManyUsingDescriptor"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

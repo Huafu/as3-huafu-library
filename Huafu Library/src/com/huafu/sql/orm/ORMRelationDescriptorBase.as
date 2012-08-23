@@ -113,7 +113,7 @@ package com.huafu.sql.orm
 		 * @param meta The reflection metadata describing the realtion
 		 * @return The new relation object
 		 */
-		private static function _createHasOneFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMHasOneDescriptor
+		private static function _createHasOneFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : IORMRelationDescriptor
 		{
 			var res : ORMHasOneDescriptor;
 			res = new ORMHasOneDescriptor(
@@ -135,27 +135,33 @@ package com.huafu.sql.orm
 		 * @param meta The reflection metadata describing the realtion
 		 * @return The new relation object
 		 */
-		private static function _createHasManyFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMHasManyDescriptor
+		private static function _createHasManyFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : IORMRelationDescriptor
 		{
-			var res : ORMHasManyDescriptor, ormClass : Class, ormClassName : String = ORMDescriptor.ormModelsPackageFullName + "::" + meta.argValueString("className");
-			try
+			var res : IORMRelationDescriptor,
+				ormClass : Class,
+				usingOrmClassName : String,
+				usingOrmClass : Class;
+			ormClass = ORMDescriptor.resolveOrmClass(meta.argValueString("className"), ownerDescriptor);
+			// the case depends if we're in front of a direct relation or not
+			if ( (usingOrmClassName = meta.argValueString("using")) )
 			{
-				ormClass = getDefinitionByName(ormClassName) as Class;
+				usingOrmClass = ORMDescriptor.resolveOrmClass(usingOrmClassName, ownerDescriptor);
+				res = new ORMHasManyUsingDescriptor(
+					ownerDescriptor,
+					property.name,
+					ormClass,
+					usingOrmClass
+				);
 			}
-			catch ( err : ReferenceError )
+			else
 			{
-				if ( err.errorID == 1065 )
-				{
-					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + meta.argValueString("className") + ";' in the constructor of '" + getQualifiedClassName(ownerDescriptor.ormClass) + "' before 'super();', it should solve the problem.";
-				}
-				throw err;
+				res = new ORMHasManyDescriptor(
+					ownerDescriptor,
+					property.name,
+					ormClass,
+					meta.argValueString("relatedColumnName")
+				);
 			}
-			res = new ORMHasManyDescriptor(
-				ownerDescriptor,
-				property.name,
-				ormClass,
-				meta.argValueString("relatedColumnName")
-			);
 			return res;
 		}
 		
@@ -168,21 +174,10 @@ package com.huafu.sql.orm
 		 * @param meta The reflection metadata describing the realtion
 		 * @return The new relation object
 		 */
-		private static function _createBelongsToFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : ORMBelongsToDescriptor
+		private static function _createBelongsToFromReflectionProperty( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, meta : ReflectionMetadata ) : IORMRelationDescriptor
 		{
-			var res : ORMBelongsToDescriptor, ormClass : Class, ormClassName : String = ORMDescriptor.ormModelsPackageFullName + "::" + meta.argValueString("className");
-			try
-			{
-				ormClass = getDefinitionByName(ormClassName) as Class;
-			}
-			catch ( err : ReferenceError )
-			{
-				if ( err.errorID == 1065 )
-				{
-					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + meta.argValueString("className") + ";' in the constructor of '" + ownerDescriptor.ormClassQName + "' before 'super();', it should solve the problem.";
-				}
-				throw err;
-			}
+			var res : ORMBelongsToDescriptor,
+				ormClass : Class = ORMDescriptor.resolveOrmClass(meta.argValueString("className"), ownerDescriptor);
 			res = new ORMBelongsToDescriptor(
 				ownerDescriptor,
 				property.name,

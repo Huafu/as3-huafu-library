@@ -233,6 +233,27 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Get the relation object that correspond to the link with a given ORM
+		 *
+		 * @param toWhat The ORM descriptor we want the relation object of
+		 * @param relationClass If specified, it'll look for a relation having strictly the given class
+		 * @return Returns the desired relation or null if no such defined
+		 */
+		public function getRelationTo( toWhat : ORMDescriptor, relationClass : Class = null ) : IORMRelationDescriptor
+		{
+			var rel : IORMRelationDescriptor;
+			for each ( rel in _relatedTo )
+			{
+				if ( rel.relatedOrmDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel, relationClass)) )
+				{
+					return rel;
+				}
+			}
+			return null;
+		}
+		
+		
+		/**
 		 * The updatedAt property if any
 		 */
 		public function get updatedAtProperty() : ORMPropertyDescriptor
@@ -285,7 +306,7 @@ package com.huafu.sql.orm
 			// prepare for relation properties
 			for each ( relation in _relatedTo )
 			{
-				relation.setupOrmObject(object, result);
+				relation.setupOrmObject(object, dataObject, result);
 			}
 		}
 		
@@ -434,6 +455,33 @@ package com.huafu.sql.orm
 		public static function get allKnownOrmDescriptors() : Array
 		{
 			return _allByClassQName.toArray();
+		}
+		
+		
+		/**
+		 * Resolve a model name to the class object corresponding
+		 * 
+		 * @param className The name of the model's class
+		 * @param fromOrm The ORM descriptor from which trying to resolve from
+		 * @return The pointer to the ORM class
+		 */
+		public static function resolveOrmClass( className : String, fromOrm : ORMDescriptor ) : Class
+		{
+			var fullCN : String = ORMDescriptor.ormModelsPackageFullName + "::" + className,
+				ormClass : Class;
+			try
+			{
+				ormClass = getDefinitionByName(fullCN) as Class;
+			}
+			catch ( err : ReferenceError )
+			{
+				if ( err.errorID == 1065 )
+				{
+					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.ormClass) + "', it should solve the problem.";
+				}
+				throw err;
+			}
+			return ormClass;
 		}
 	}
 }
