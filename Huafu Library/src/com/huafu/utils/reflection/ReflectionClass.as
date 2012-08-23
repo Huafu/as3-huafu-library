@@ -236,5 +236,19 @@ package com.huafu.utils.reflection
 		{
 			return getQualifiedClassName(theClass);
 		}
+		
+		
+		/**
+		 * Finds whether a given object is an instance of the given class
+		 * and only of the given class, not an extended version of the class
+		 * 
+		 * @param objectToTest The object to test
+		 * @param classToTest The class the object has to be of
+		 * @return Returns true if the object is an instance of the given class, else false
+		 */
+		public static function isStrictly( objectToTest : *, classToTest : Class ) : Boolean
+		{
+			return (objectToTest is classToTest) && (getQualifiedClassName(objectToTest) == getQualifiedClassName(classToTest));
+		}
 	}
 }
