@@ -306,7 +306,7 @@ package com.huafu.sql.orm
 			// prepare for relation properties
 			for each ( relation in _relatedTo )
 			{
-				relation.setupOrmObject(object, result);
+				relation.setupOrmObject(object, dataObject, result);
 			}
 		}
 		

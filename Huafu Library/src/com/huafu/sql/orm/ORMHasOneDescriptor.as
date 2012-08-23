@@ -100,9 +100,10 @@ package com.huafu.sql.orm
 		 * Setup the property of an ORM object looking at this realtion
 		 * 
 		 * @param ormObject The ORM object to setup property of
+		 * @param dataObject The dataObject that the ORM object holds
 		 * @param resultRow The result row object containing data for this relation
 		 */
-		public function setupOrmObject( ormObject : ORM, resultRow : Object ) : void
+		public function setupOrmObject( ormObject : ORM, dataObject : Object, resultRow : Object ) : void
 		{
 			var res : ORM, id : int = resultRow[columnName];
 			if ( id )
@@ -117,7 +118,7 @@ package com.huafu.sql.orm
 			{
 				res = null;
 			}
-			ormObject[propertyName] = res;
+			dataObject[propertyName] = res;
 		}
 	}
 }
