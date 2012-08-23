@@ -4,6 +4,7 @@ package com.huafu.sql.orm
 	
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
+	import flash.errors.IllegalOperationError;
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
 	
@@ -86,33 +87,42 @@ package com.huafu.sql.orm
 		}
 		
 		
+		/**
+		 * The number of items in the collection
+		 */
+		public function get count() : int
+		{
+			if ( !_data )
+			{
+				_load();
+			}
+			return _data.length;
+		}
+		
+		
+		/**
+		 * Get all the items in an array
+		 * 
+		 * @return The array containing all ORM instances that this iterator would have ran through
+		 */
+		public function toArray() : Array
+		{
+			var res : Array = new Array(), item : ORM;
+			for each ( item in this )
+			{
+				res.push(item);
+			}
+			return res;
+		}
+		
+		
 		flash_proxy override function nextNameIndex( index : int ) : int
 		{
-			var name : String, cleanName : String, paramsDiffers : Boolean = false;
-			if ( index == 0 && _objectUsedToReaload )
+			if ( index == 0 && _objectUsedToReaload && (_loadOnEveryNewIteration || !_data) )
 			{
-				// (re)bind the parameters
-				for ( name in _statement.parameters )
-				{
-					cleanName = name.substr(1);
-					if ( _objectUsedToReaload.hasOwnProperty(cleanName) )
-					{
-						if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[cleanName] )
-						{
-							paramsDiffers = true;
-						}
-						_statement.parameters[name] = _objectUsedToReaload[cleanName];
-					}
-				}
-				// re-execute only if the parameters are new, or no data yet, or force reload on
-				// every new iteration
-				if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
-				{
-					_statement.safeExecute();
-					_data = new ArrayList(_statement.getResult().data);
-				}
+				_load();
 			}
-			if ( index > _data.length )
+			if ( index >= _data.length )
 			{
 				return 0;
 			}
@@ -132,6 +142,49 @@ package com.huafu.sql.orm
 		}
 		
 		
+		flash_proxy override function getProperty( name : * ) : *
+		{
+			if ( name is String )
+			{
+				throw new IllegalOperationError("You cannot access property '" + name + "' on an ORMIterator");
+			}
+			if ( !_data )
+			{
+				_load();
+			}
+			return _get(name);
+		}
+		
+		
+		/**
+		 * Used to (re)load the data
+		 */
+		private function _load() : void
+		{
+			var name : String, cleanName : String, paramsDiffers : Boolean = false;
+			// (re)bind the parameters
+			for ( name in _statement.parameters )
+			{
+				cleanName = name.substr(1);
+				if ( _objectUsedToReaload.hasOwnProperty(cleanName) )
+				{
+					if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[cleanName] )
+					{
+						paramsDiffers = true;
+					}
+					_statement.parameters[name] = _objectUsedToReaload[cleanName];
+				}
+			}
+			// re-execute only if the parameters are new, or no data yet, or force reload on
+			// every new iteration
+			if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
+			{
+				_statement.safeExecute();
+				_data = new ArrayList(_statement.getResult().data);
+			}
+		}
+		
+		
 		/**
 		 * Get an item looking at its index, creating the ORM instance for it if not created yet
 		 *
@@ -140,14 +193,15 @@ package com.huafu.sql.orm
 		 */
 		private function _get( index : int ) : ORM
 		{
-			var res : ORM;
-			if ( !(_data[index] is ORM) )
+			var res : ORM, v : *;
+			if ( !((v = _data.getItemAt(index)) is ORM) )
 			{
 				res = ORM.factory(_ormClass);
-				res.loadDataFromSqlResult(_data[index]);
-				_data[index] = res;
+				res.loadDataFromSqlResult(v);
+				_data.setItemAt(res, index);
+				return res;
 			}
-			return _data[index];
+			return v;
 		}
 	}
 }

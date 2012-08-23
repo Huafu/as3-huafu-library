@@ -257,8 +257,15 @@ package com.huafu.sql.orm
 				}
 				name = nameParts[0];
 				prop = ormDescriptor.propertyDescriptor(name);
-				_params.push(prop.columnName + " " + op + " :" + name);
-				binds[name] = value;
+				if ( value === null )
+				{
+					_params.push(prop.columnName + " IS" + (op == "!=" ? " NOT" : "") + " NULL");
+				}
+				else
+				{
+					_params.push(prop.columnName + " " + op + " :" + name);
+					binds[name] = value;
+				}
 			}
 			if ( _params.length > 0 )
 			{
@@ -333,14 +340,15 @@ package com.huafu.sql.orm
 		public function save() : Boolean
 		{
 			var ev : ORMEvent = new ORMEvent(ORMEvent.SAVING), sql : String, res : SQLResult,
-				parts : Array, params : Object = {}, name : String, stmt : SQLiteStatement;
+				parts : Array, params : Object = {}, name : String, stmt : SQLiteStatement,
+				prop : ORMPropertyDescriptor, rel : ORMHasOneDescriptor;
 			
 			dispatchEvent(ev);
 			if ( ev.preventDefault() )
 			{
 				return false;
 			}
-			// TODO: save the relation too
+
 			if ( primaryKeyValue )
 			{
 				// update
@@ -358,8 +366,19 @@ package com.huafu.sql.orm
 				parts = new Array();
 				for each ( name in _hasChanged )
 				{
-					parts.push(ormDescriptor.propertyDescriptor(name).columnName + " = :" + name);
-					params[name] = _data[name];
+					prop = ormDescriptor.propertyDescriptor(name);
+					if ( prop )
+					{
+						parts.push(prop.columnName + " = :" + name);
+						params[name] = _data[name];
+					}
+					else
+					{
+						// it's a "has one" relation, save the id or null if no ID
+						rel = ormDescriptor.getRelatedTo(name) as ORMHasOneDescriptor;
+						parts.push(rel.columnName + " = :" + name);
+						params[name] = _data[name] ? _data[name][rel.relatedOrmPropertyDescriptor.name] : null;
+					}
 				}
 				sql += parts.join(", ") + " WHERE " + primaryKeyColumnName
 					+ " = :" + primaryKeyPropertyName;
@@ -369,7 +388,7 @@ package com.huafu.sql.orm
 				stmt = connection.createStatement(sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
-				if ( stmt.getResult().rowsAffected > 0 )
+				if ( stmt.getResult().rowsAffected == 1 )
 				{
 					_isSaved = true;
 					_hasChanged = new Array();
@@ -396,8 +415,19 @@ package com.huafu.sql.orm
 				parts = new Array();
 				for each ( name in _hasChanged )
 				{
-					parts.push(ormDescriptor.propertyDescriptor(name).columnName);
-					params[name] = _data[name];
+					prop = ormDescriptor.propertyDescriptor(name);
+					if ( prop )
+					{
+						parts.push(prop.columnName);
+						params[name] = _data[name];
+					}
+					else
+					{
+						// it's a "has one" relation, save the id or null if no ID
+						rel = ormDescriptor.getRelatedTo(name) as ORMHasOneDescriptor;
+						parts.push(rel.columnName);
+						params[name] = _data[name] ? _data[name][rel.relatedOrmPropertyDescriptor.name] : null;
+					}
 				}
 				sql += parts.join(", ") + ") VALUES(:" + _hasChanged.join(", :") + ")";
 				
@@ -551,36 +581,33 @@ package com.huafu.sql.orm
 				throw new IllegalOperationError("You cannot " + event.kind + " a property on an ORM model");
 			}
 			var pName : String = event.property.toString(),
+				rel : IORMRelationDescriptor,
 				prop : ORMPropertyDescriptor = _descriptor.propertyDescriptor(pName);
 			if ( !prop )
 			{
-				if ( _descriptor.getRelatedTo(pName) )
+				if ( !(rel = _descriptor.getRelatedTo(pName)) )
 				{
-					return;
+					throw new IllegalOperationError("Trying to access a unknown property '"
+						+ pName + "'. Define it first in the model if you wish to use it in your code if that is a column of the related table.");
 				}
-				throw new IllegalOperationError("Trying to access a unknown property '"
-					+ pName + "'. Define it first in the model if you wish to use it in your code if that is a column of the related table.");
 			}
 			// here it's a property of the ORM that has changed
-			if ( prop.isReadOnly )
+			if ( prop && prop.isReadOnly )
 			{
 				throw new IllegalOperationError("The property '" + prop.name + "'  of model '" + _descriptor.ormClassQName + "' is read-only");
 			}
-			var ev : ORMEvent = new ORMEvent(ORMEvent.PROPERTY_UPDATE, prop);
+			var ev : ORMEvent = new ORMEvent(ORMEvent.PROPERTY_UPDATE, pName);
 			dispatchEvent(ev);
 			// if the event has been cancelled, don't do the update
 			if ( ev.isDefaultPrevented() )
 			{
-				_data[prop.name] = event.oldValue;
+				_data[pName] = event.oldValue;
 			}
-			else
+			else if ( (!rel || rel is ORMHasOneDescriptor) && _hasChanged.indexOf(pName) == -1 )
 			{
+				_hasChanged.push(pName);
 				_isSaved = false;
 				_isLoaded = false;
-				if ( _hasChanged.indexOf(prop.name) == -1 )
-				{
-					_hasChanged.push(prop.name);
-				}
 			}
 		}
 		
