@@ -18,28 +18,24 @@ package com.huafu.sql.orm
 		/**
 		 * The data which is browsed is stored here
 		 */
-		private var _data : ArrayList;
+		internal var _data : ArrayList;
 		/**
 		 * The statement object
 		 */
-		private var _statement : SQLiteStatement;
+		internal var _statement : SQLiteStatement;
 		/**
 		 * If given, when the iteration will be initiated, the data wil be binded to
 		 * the statement using this object
 		 */
-		private var _objectUsedToReaload : Object;
+		internal var _objectUsedToReaload : Object;
 		/**
 		 * A pointer to the ORM class that this iterator delivers
 		 */
-		private var _ormClass : Class;
-		/**
-		 * The instance of ORM object used by this object
-		 */
-		private var _ormInstance : ORM;
+		internal var _ormClass : Class;
 		/**
 		 * Stores whether to executre the statement on each new iteration or not
 		 */
-		private var _loadOnEveryNewIteration : Boolean;
+		internal var _loadOnEveryNewIteration : Boolean;
 		
 		
 		/**
@@ -75,19 +71,6 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * The global ORM instance of the iterator
-		 */
-		private function get ormInstance() : ORM
-		{
-			if ( !_ormInstance )
-			{
-				_ormInstance = ORM.factory(_ormClass);
-			}
-			return _ormInstance;
-		}
-		
-		
-		/**
 		 * The number of items in the collection
 		 */
 		public function get count() : int
@@ -116,7 +99,13 @@ package com.huafu.sql.orm
 		}
 		
 		
-		flash_proxy override function nextNameIndex( index : int ) : int
+		/**
+		 * Get the next item's index looking at the given index
+		 * 
+		 * @param index The current index
+		 * @return The index of the next item
+		 */
+		internal function nextItemIndex( index : int ) : int
 		{
 			if ( index == 0 && _objectUsedToReaload && (_loadOnEveryNewIteration || !_data) )
 			{
@@ -127,6 +116,12 @@ package com.huafu.sql.orm
 				return 0;
 			}
 			return index + 1;
+		}
+		
+		
+		flash_proxy override function nextNameIndex( index : int ) : int
+		{
+			return nextItemIndex(index);
 		}
 		
 		
@@ -159,7 +154,7 @@ package com.huafu.sql.orm
 		/**
 		 * Used to (re)load the data
 		 */
-		private function _load() : void
+		internal function _load() : void
 		{
 			var name : String, cleanName : String, paramsDiffers : Boolean = false;
 			// (re)bind the parameters
