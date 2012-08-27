@@ -44,6 +44,10 @@ package com.huafu.sql.query
 		 * The offset part
 		 */
 		internal var limitOffset : int;
+		/**
+		 * Stores whether the last function call was related to having or to where
+		 */
+		internal var inHaving : Boolean;
 		
 		/**
 		 * The connection used to execute the query
@@ -101,6 +105,7 @@ package com.huafu.sql.query
 		 */
 		public function where( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = false;
 			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
@@ -119,6 +124,7 @@ package com.huafu.sql.query
 		 */
 		public function andWhere( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = false;
 			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
@@ -133,6 +139,7 @@ package com.huafu.sql.query
 		 */
 		public function orWhere( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = false;
 			_where(this.conditions, SQLiteConditionGroup.OR, conditions);
 			return this;
 		}
@@ -147,6 +154,7 @@ package com.huafu.sql.query
 		 */
 		public function having( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = true;
 			_where(havings, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
@@ -161,6 +169,7 @@ package com.huafu.sql.query
 		 */
 		public function andHaving( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = true;
 			_where(havings, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
@@ -175,7 +184,39 @@ package com.huafu.sql.query
 		 */
 		public function orHaving( ... conditions : Array ) : SQLiteQuery
 		{
+			inHaving = true;
 			_where(havings, SQLiteConditionGroup.OR, conditions);
+			return this;
+		}
+		
+		
+		public function openBraket( logicOperator = SQLiteConditionGroup.AND ) : SQLiteQuery
+		{
+			var group : SQLiteConditionGroup = new SQLiteConditionGroup();
+			if ( inHaving )
+			{
+				havings.add(group, logicOperator);
+				havings = group;
+			}
+			else
+			{
+				conditions.add(group, logicOperator);
+				conditions = group;
+			}
+			return this;
+		}
+		
+		
+		public function closeBracket() : SQLiteQuery
+		{
+			if ( inHaving )
+			{
+				havings = havings.ownerGroup;
+			}
+			else
+			{
+				conditions = conditions.ownerGroup;
+			}
 			return this;
 		}
 		
@@ -292,6 +333,7 @@ package com.huafu.sql.query
 			limitCount = 0;
 			limitOffset = 0;
 			havings.reset();
+			inHaving = false;
 			return this;
 		}
 		
