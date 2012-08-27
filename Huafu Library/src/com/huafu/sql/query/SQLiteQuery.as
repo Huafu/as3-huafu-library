@@ -30,56 +30,56 @@ package com.huafu.sql.query
 		
 		public function select( ... fields : Array ) : SQLiteQuery
 		{
-			_add(fields, this.fieldList);
+			_add(fields, fieldList);
 			return this;
 		}
 		
 		
 		public function from( ... tables : Array ) : SQLiteQuery
 		{
-			_add(tables, this.tableList);
+			_add(tables, tableList);
 			return this;
 		}
 		
 		
 		public function where( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(this.conditions, SQLiteConditionGroup.AND);
+			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
 		
 		
 		public function andWhere( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(this.conditions, SQLiteConditionGroup.AND);
+			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
 		
 		
 		public function orWhere( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(this.conditions, SQLiteConditionGroup.OR);
+			_where(this.conditions, SQLiteConditionGroup.OR, conditions);
 			return this;
 		}
 		
 		
 		public function having( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(havings, SQLiteConditionGroup.AND);
+			_where(havings, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
 		
 		
 		public function andHaving( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(havings, SQLiteConditionGroup.AND);
+			_where(havings, SQLiteConditionGroup.AND, conditions);
 			return this;
 		}
 		
 		
 		public function orHaving( ... conditions : Array ) : SQLiteQuery
 		{
-			_where(havings, SQLiteConditionGroup.OR);
+			_where(havings, SQLiteConditionGroup.OR, conditions);
 			return this;
 		}
 		
@@ -186,7 +186,7 @@ package com.huafu.sql.query
 		}
 		
 		
-		private function _where( which : SQLiteConditionGroup, logicOp : String, ... conditions : Array ) : void
+		private function _where( which : SQLiteConditionGroup, logicOp : String, conditions : Array ) : void
 		{
 			var condition : *, name : String, parts : Array;
 			if ( conditions.length == 1 && conditions[0] is Array )
@@ -197,12 +197,12 @@ package com.huafu.sql.query
 			{
 				if ( ReflectionClass.isStrictly(condition, Object) )
 				{
-					for each ( name in condition )
+					for ( name in condition )
 					{
 						parts = name.match(/^\s*([a-z0-9_]+)\s*([=\!\<\>]{1,2})?$/i);
-						if ( parts.length == 2 )
+						if ( parts[2] == undefined )
 						{
-							parts.push("=");
+							parts[2] = "=";
 						}
 						condition = new SQLiteCondition(parts[1] + " " + parts[2] + " ?", condition[name]);
 						which.add(condition, logicOp);
