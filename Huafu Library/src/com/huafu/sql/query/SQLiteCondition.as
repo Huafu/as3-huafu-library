@@ -29,10 +29,12 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters if any
 		 * @return The SQL code of the condition
 		 */
-		public function sqlCode( parametersDestination : SQLiteParameters ) : String
+		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
 		{
-			var res : String = conditionString;
-			parametersDestination.bind.apply(parametersDestination, parameters);
+			if ( parametersDestination )
+			{
+				parametersDestination.bind.apply(parametersDestination, parameters);
+			}
 			return conditionString;
 		}
 		

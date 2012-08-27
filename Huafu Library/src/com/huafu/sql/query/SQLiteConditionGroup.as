@@ -58,7 +58,7 @@ package com.huafu.sql.query
 		}
 		
 		
-		public function sqlCode( parametersDestination : SQLiteParameters ) : String
+		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
 		{
 			var item : *, i : int, res : String = "";
 			if ( list.length < 1 )
