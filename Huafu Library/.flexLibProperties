@@ -20,6 +20,10 @@
     <classEntry path="com.huafu.sql.orm.IORMRelationDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMBelongsToDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMHasManyUsingDescriptor"/>
+    <classEntry path="com.huafu.sql.query.SQLiteQuery"/>
+    <classEntry path="com.huafu.sql.query.SQLiteConditionGroup"/>
+    <classEntry path="com.huafu.sql.query.SQLiteCondition"/>
+    <classEntry path="com.huafu.sql.query.SQLiteParameters"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
