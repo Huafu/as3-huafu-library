@@ -6,20 +6,57 @@ package com.huafu.sql.query
 	
 	import flash.data.SQLResult;
 	
+	
+	/**
+	 * Helper to build SQL queries
+	 */
 	public class SQLiteQuery
 	{
+		/**
+		 * List of fields
+		 */
 		internal var fieldList : Array;
+		/**
+		 * List of tables
+		 */
 		internal var tableList : Array;
+		/**
+		 * The conditions for the where part
+		 */
 		internal var conditions : SQLiteConditionGroup;
+		/**
+		 * The list of group by
+		 */
 		internal var groupByList : Array;
+		/**
+		 * THe list of order by
+		 */
 		internal var orderByList : Array;
+		/**
+		 * The conditions of the having part
+		 */
 		internal var havings : SQLiteConditionGroup;
+		/**
+		 * The limit part
+		 */
 		internal var limitCount : int;
+		/**
+		 * The offset part
+		 */
 		internal var limitOffset : int;
 		
+		/**
+		 * The connection used to execute the query
+		 */
 		public var connection : SQLiteConnection;
 		
-		public function SQLiteQuery( connection : SQLiteConnection )
+		
+		/**
+		 * Creates a new query object
+		 * 
+		 * @param connection The SQL connection to use when executing the query
+		 */
+		public function SQLiteQuery( connection : SQLiteConnection = null )
 		{
 			this.connection = connection;
 			conditions = new SQLiteConditionGroup();
@@ -28,6 +65,14 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add field(s) to the select part
+		 * 
+		 * @param fields Any amount of fields or an array containing the fields. Each parameter (or item in the array)
+		 * can be a string with the SQL code of the field or an object with each property name as the alias and the value as
+		 * the SQL code for that alias
+		 * @return Returns this object to do chained calls
+		 */
 		public function select( ... fields : Array ) : SQLiteQuery
 		{
 			_add(fields, fieldList);
@@ -35,13 +80,25 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add table(s) to the list of tables to select from
+		 * 
+		 * @param tables The table(s) to add (see #select() method to see what parameters can be sent)
+		 * @return Returns this object to do chained calls
+		 */
 		public function from( ... tables : Array ) : SQLiteQuery
 		{
 			_add(tables, tableList);
 			return this;
 		}
 		
-		
+		/**
+		 * Add conditions to the where clause
+		 * 
+		 * @param conditions The conditions
+		 * @return Returns this object to do chained calls
+		 * @see #andWhere
+		 */
 		public function where( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
@@ -49,6 +106,17 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add conditions to the where clause with the AND logic operator
+		 * 
+		 * @param conditions Any amount of conditions or an array with all conditions to add
+		 * each parameter or item in the array should be a SQLiteCondition object
+		 * or a SQLiteConditionGroup object, or the string of the condition,
+		 * or an object where each property name is the name of the column and
+		 * the value is the value it has to be equal (for other operators, add them at the end
+		 * of the name of the property
+		 * @return Returns this object to do chained calls
+		 */
 		public function andWhere( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
@@ -56,6 +124,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add conditions to the where clause with the OR logic operator
+		 * 
+		 * @param conditions The conditions to add
+		 * @return Returns this object to do chained calls
+		 * @see #andWhere
+		 */
 		public function orWhere( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(this.conditions, SQLiteConditionGroup.OR, conditions);
@@ -63,6 +138,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add conditions to the having clause with the AND logic operator
+		 * 
+		 * @param conditions the conditions
+		 * @return Returns this object to do chained calls
+		 * @see #andWhere
+		 */
 		public function having( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(havings, SQLiteConditionGroup.AND, conditions);
@@ -70,6 +152,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add conditions to the having clause with the AND logic operator
+		 * 
+		 * @param conditions the conditions
+		 * @return Returns this object to do chained calls
+		 * @see #andWhere
+		 */
 		public function andHaving( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(havings, SQLiteConditionGroup.AND, conditions);
@@ -77,6 +166,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add conditions to the having clause with the OR logic operator
+		 * 
+		 * @param conditions the conditions
+		 * @return Returns this object to do chained calls
+		 * @see #andWhere
+		 */
 		public function orHaving( ... conditions : Array ) : SQLiteQuery
 		{
 			_where(havings, SQLiteConditionGroup.OR, conditions);
@@ -186,6 +282,20 @@ package com.huafu.sql.query
 		}
 		
 		
+		public function reset() : SQLiteQuery
+		{
+			fieldList = new Array();
+			tableList = new Array();
+			conditions.reset();
+			groupByList = new Array();
+			orderByList = new Array();
+			limitCount = 0;
+			limitOffset = 0;
+			havings.reset();
+			return this;
+		}
+		
+		
 		private function _where( which : SQLiteConditionGroup, logicOp : String, conditions : Array ) : void
 		{
 			var condition : *, name : String, parts : Array;
@@ -237,20 +347,6 @@ package com.huafu.sql.query
 					}
 				}
 			}
-		}
-		
-		
-		public function reset() : SQLiteQuery
-		{
-			fieldList = new Array();
-			tableList = new Array();
-			conditions.reset();
-			groupByList = new Array();
-			orderByList = new Array();
-			limitCount = 0;
-			limitOffset = 0;
-			havings.reset();
-			return this;
 		}
 	}
 }

@@ -12,7 +12,13 @@ package com.huafu.sql.query
 	 */
 	public class SQLiteParameters extends Proxy
 	{
+		/**
+		 * The name indexed parameters
+		 */
 		internal var namedParams : Object;
+		/**
+		 * The 0 based indexed parameters
+		 */
 		internal var zeroBasedParams : Array;
 		
 		/**
