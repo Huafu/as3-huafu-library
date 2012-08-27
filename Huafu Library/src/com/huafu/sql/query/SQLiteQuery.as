@@ -139,12 +139,20 @@ package com.huafu.sql.query
 		public function compile() : SQLiteStatement
 		{
 			var params : SQLiteParameters = new SQLiteParameters,
-				res : SQLiteStatement = connection.createStatement(),
-				sql : String;
+				res : SQLiteStatement = connection.createStatement();
+			res.text = sqlCode(params);
+			params.bindTo(res);
+			return res;
+		}
+		
+		
+		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var sql : String;
 			sql = "SELECT " + (fieldList.length == 0 ? "*" : fieldList.join(", ")) + " FROM " + tableList.join(", ");
 			if ( conditions.length > 0 )
 			{
-				sql += " WHERE " + conditions.sqlCode(params);
+				sql += " WHERE " + conditions.sqlCode(parametersDestination);
 			}
 			if ( groupByList.length > 0 )
 			{
@@ -152,7 +160,7 @@ package com.huafu.sql.query
 			}
 			if ( havings.length > 0 )
 			{
-				sql += " HAVING " + havings.sqlCode(params);
+				sql += " HAVING " + havings.sqlCode(parametersDestination);
 			}
 			if ( orderByList.length > 0 )
 			{
@@ -166,9 +174,7 @@ package com.huafu.sql.query
 					sql += ", " + limitOffset;
 				}
 			}
-			res.text = sql;
-			params.bindTo(res);
-			return res;
+			return sql;
 		}
 		
 		
