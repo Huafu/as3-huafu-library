@@ -205,7 +205,7 @@ package com.huafu.sql.query
 		}
 		
 		
-		public function openBraket( logicOperator : String = SQLiteConditionGroup.AND ) : SQLiteQuery
+		public function openBracket( logicOperator : String = SQLiteConditionGroup.AND ) : SQLiteQuery
 		{
 			var group : SQLiteConditionGroup = new SQLiteConditionGroup();
 			if ( inHaving )
