@@ -5,7 +5,13 @@ package com.huafu.sql.query
 	 */
 	public class SQLiteCondition
 	{
+		/**
+		 * Stores all parameters
+		 */
 		internal var parameters : Array;
+		/**
+		 * Stores the condition string
+		 */
 		internal var conditionString : String;
 		
 		/**
