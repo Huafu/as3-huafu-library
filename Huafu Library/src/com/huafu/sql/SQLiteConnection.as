@@ -104,9 +104,9 @@ package com.huafu.sql
 		 * @param noCache If true, the cache won't be used or set
 		 * @return The cache or new statement
 		 */
-		public function createStatement( sql : String, noCache : Boolean = false ) : SQLiteStatement
+		public function createStatement( sql : String = null, noCache : Boolean = false ) : SQLiteStatement
 		{
-			var res : SQLiteStatement = noCache ? null : _stmtCache.get(sql);
+			var res : SQLiteStatement = (noCache || !sql) ? null : _stmtCache.get(sql);
 			if ( res )
 			{
 				res.clearParameters();
@@ -115,7 +115,7 @@ package com.huafu.sql
 			res = new SQLiteStatement();
 			res.sqlConnection = this;
 			res.text = sql;
-			if ( !noCache )
+			if ( !(noCache || !sql) )
 			{
 				_stmtCache.set(sql, res);
 			}
