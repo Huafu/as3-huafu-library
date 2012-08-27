@@ -115,5 +115,14 @@ package com.huafu.sql.query
 			}
 			return res;
 		}
+		
+		
+		/**
+		 * The group owning this group if any
+		 */
+		public function get ownerGroup() : SQLiteConditionGroup
+		{
+			return _owner;
+		}
 	}
 }
