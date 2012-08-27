@@ -9,6 +9,21 @@ package com.huafu.sql.query
 	
 	/**
 	 * Helper to build SQL queries
+	 * @example
+	 * <listing version="3.0">
+	 * 	var query :SQLiteQuery = new SQLiteQuery(theConnection);
+	 * 	var results : Array;
+	 * results = query.select("name", {firstName: "first_name", lastName: "UPPER(last_name)"})
+	 * 		.from("user", {AnotherTable: "the_name"})
+	 * 		.where("id = 2")
+	 * 		.openBracket(SQLiteConditionGroup.OR)
+	 * 			.where({id: 5})
+	 * 			.orWhere({"age >=": 10})
+	 * 		.closeBracket()
+	 * 		.orderBy("name ASC", {age: "DESC"})
+	 * 		.limit(10)
+	 * 		.get();
+	 * </listing>
 	 */
 	public class SQLiteQuery
 	{
