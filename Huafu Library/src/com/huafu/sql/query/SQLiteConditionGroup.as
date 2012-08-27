@@ -25,6 +25,24 @@ package com.huafu.sql.query
 			list = new Array();
 		}
 		
+		
+		public function get length() : int
+		{
+			var i : int, res : int = 0;
+			for ( i = 0; i < list.length; i += 2 )
+			{
+				if ( list[i] is SQLiteConditionGroup )
+				{
+					res += (list[i] as SQLiteConditionGroup).length;
+				}
+				else
+				{
+					res += 1;
+				}
+			}
+			return res;
+		}
+		
 		public function add( condition : *, logicOperator : String = AND ) : SQLiteConditionGroup
 		{
 			if ( list.length > 0 )

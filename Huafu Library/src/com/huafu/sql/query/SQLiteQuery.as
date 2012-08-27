@@ -1,16 +1,21 @@
 package com.huafu.sql.query
 {
 	import com.huafu.sql.SQLiteConnection;
+	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.utils.reflection.ReflectionClass;
+	
+	import flash.data.SQLResult;
 	
 	public class SQLiteQuery
 	{
-		internal var fields : Array;
-		internal var tables : Array;
+		internal var fieldList : Array;
+		internal var tableList : Array;
 		internal var conditions : SQLiteConditionGroup;
-		internal var groupBy : Array;
-		internal var orderBy : Array;
+		internal var groupByList : Array;
+		internal var orderByList : Array;
 		internal var havings : SQLiteConditionGroup;
+		internal var limitCount : int;
+		internal var limitOffset : int;
 		
 		public var connection : SQLiteConnection;
 		
@@ -25,14 +30,14 @@ package com.huafu.sql.query
 		
 		public function select( ... fields : Array ) : SQLiteQuery
 		{
-			_add(fields, this.fields);
+			_add(fields, this.fieldList);
 			return this;
 		}
 		
 		
 		public function from( ... tables : Array ) : SQLiteQuery
 		{
-			_add(tables, this.tables);
+			_add(tables, this.tableList);
 			return this;
 		}
 		
@@ -76,6 +81,102 @@ package com.huafu.sql.query
 		{
 			_where(havings, SQLiteConditionGroup.OR);
 			return this;
+		}
+		
+		
+		public function orderBy( ... fields : Array ) : SQLiteQuery
+		{
+			var field : *, name : String;
+			if ( fields.length == 1 && fields[0] is Array )
+			{
+				fields = fields[0];
+			}
+			for each ( field in fields )
+			{
+				if ( ReflectionClass.isStrictly(field, Object) )
+				{
+					for ( name in field )
+					{
+						if ( field[name].match(/^\s*desc\s*$/i) )
+						{
+							orderByList.push(name + " DESC");
+						}
+						else
+						{
+							orderByList.push(name + " ASC");
+						}
+					}
+				}
+				else
+				{
+					orderByList.push(field);
+				}
+			}
+			return this;
+		}
+		
+		
+		public function groupBy( ... fields : Array ) : SQLiteQuery
+		{
+			var field : *;
+			if ( fields.length == 1 && fields[0] is Array )
+			{
+				fields = fields[0];
+			}
+			groupByList.push.apply(groupByList, fields);
+			return this;
+		}
+		
+		
+		public function limit( count : int, offset : int = 0 ) : SQLiteQuery
+		{
+			limitCount = count;
+			limitOffset = offset;
+			return this;
+		}
+		
+		
+		public function compile() : SQLiteStatement
+		{
+			var params : SQLiteParameters = new SQLiteParameters,
+				res : SQLiteStatement = connection.createStatement(),
+				sql : String;
+			sql = "SELECT " + (fieldList.length == 0 ? "*" : fieldList.join(", ")) + " FROM " + tableList.join(", ");
+			if ( conditions.length > 0 )
+			{
+				sql += " WHERE " + conditions.sqlCode(params);
+			}
+			if ( groupByList.length > 0 )
+			{
+				sql += " GROUP BY " + groupByList.join(", ");
+			}
+			if ( havings.length > 0 )
+			{
+				sql += " HAVING " + havings.sqlCode(params);
+			}
+			if ( orderByList.length > 0 )
+			{
+				sql += " ORDER BY " + orderByList.join(", ");
+			}
+			if ( limitCount )
+			{
+				sql += " LIMIT " + limitCount;
+				if ( limitOffset )
+				{
+					sql += ", " + limitOffset;
+				}
+			}
+			res.text = sql;
+			params.bindTo(res);
+			return res;
+		}
+		
+		
+		public function get() : Array
+		{
+			var stmt : SQLiteStatement = compile();
+			stmt.safeExecute();
+			return stmt.getResult().data;
 		}
 		
 		
@@ -135,11 +236,13 @@ package com.huafu.sql.query
 		
 		public function reset() : SQLiteQuery
 		{
-			fields = new Array();
-			tables = new Array();
+			fieldList = new Array();
+			tableList = new Array();
 			conditions.reset();
-			groupBy = new Array();
-			orderBy = new Array();
+			groupByList = new Array();
+			orderByList = new Array();
+			limitCount = 0;
+			limitOffset = 0;
 			havings.reset();
 			return this;
 		}

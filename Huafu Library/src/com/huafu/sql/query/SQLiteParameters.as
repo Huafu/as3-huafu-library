@@ -1,7 +1,9 @@
 package com.huafu.sql.query
 {
+	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.utils.reflection.ReflectionClass;
 	
+	import flash.data.SQLStatement;
 	import flash.errors.IllegalOperationError;
 	import flash.utils.Proxy;
 
@@ -80,6 +82,25 @@ package com.huafu.sql.query
 				}
 			}
 			return this;
+		}
+		
+		
+		/**
+		 * Bind all parameters to a SQL statement
+		 * 
+		 * @param statement The statement on which to bin all parameters
+		 */
+		public function bindTo( statement : SQLStatement ) : void
+		{
+			var name : String, i : int;
+			for ( name in namedParams )
+			{
+				statement.parameters[name] = namedParams[name];
+			}
+			for ( i = 0; i < zeroBasedParams.length; i++ )
+			{
+				statement.parameters[i] = zeroBasedParams[i];
+			}
 		}
 	}
 }
