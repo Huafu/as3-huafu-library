@@ -205,6 +205,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Open a parenthesis while in where or having parts
+		 * 
+		 * @param logicOperator If there is already one or more conditions, this logic operator
+		 * will be used to aggregate the block
+		 * @return Returns this object to do chained calls
+		 */
 		public function openBracket( logicOperator : String = SQLiteConditionGroup.AND ) : SQLiteQuery
 		{
 			var group : SQLiteConditionGroup = new SQLiteConditionGroup();
@@ -222,6 +229,11 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Close a previously opened parenthesis withing a having or whre clause
+		 * 
+		 * @return Returns this object to do chained calls
+		 */
 		public function closeBracket() : SQLiteQuery
 		{
 			if ( inHaving )
@@ -236,6 +248,15 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add one or more order by instruction
+		 * 
+		 * @param fields Fields to order by, as many as needed, or an array of them.
+		 * Each paraemter or element of the array must be a string corresponding to
+		 * the SQL code of the order by, or an object with property names as field
+		 * to order to and property values as the direction (asc/desc)
+		 * @return Returns this object to do chained calls
+		 */
 		public function orderBy( ... fields : Array ) : SQLiteQuery
 		{
 			var field : *, name : String;
@@ -268,6 +289,14 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add one or more group by instruction
+		 * 
+		 * @param fields Fields to group by, as many as needed, or an array of them.
+		 * Each paraemter or element of the array must be a string corresponding to
+		 * the SQL code of the group by
+		 * @return Returns this object to do chained calls
+		 */
 		public function groupBy( ... fields : Array ) : SQLiteQuery
 		{
 			var field : *;
@@ -280,6 +309,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Set the limits of record and optional offset
+		 * 
+		 * @param count The maximum of records to get
+		 * @param offset The first record to get in the results
+		 * @return Returns this object to do chained calls
+		 */
 		public function limit( count : int, offset : int = 0 ) : SQLiteQuery
 		{
 			limitCount = count;
@@ -288,6 +324,11 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Creates the statement and bind parameeters that can be used to execute the query
+		 * 
+		 * @return The statement object, ready to be executed
+		 */
 		public function compile() : SQLiteStatement
 		{
 			var params : SQLiteParameters = new SQLiteParameters,
@@ -298,6 +339,13 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Get the SQL code of the query, optionally binding parameters to the
+		 * given parameters object
+		 * 
+		 * @param parametersDestination Where to bind the parameters to if any
+		 * @return The SQL code of the query
+		 */
 		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
 		{
 			var sql : String;
@@ -330,6 +378,11 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Compile, execute and get the results of the query
+		 * 
+		 * @return The array of all results
+		 */
 		public function get() : Array
 		{
 			var stmt : SQLiteStatement = compile();
@@ -338,6 +391,11 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Reset the query
+		 * 
+		 * @return Returns this object to do chained calls
+		 */
 		public function reset() : SQLiteQuery
 		{
 			fieldList = new Array();
