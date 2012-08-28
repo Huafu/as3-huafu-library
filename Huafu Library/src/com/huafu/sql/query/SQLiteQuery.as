@@ -411,6 +411,9 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add where conditions in a given condition group with the given logic operator
+		 */
 		private function _where( which : SQLiteConditionGroup, logicOp : String, conditions : Array ) : void
 		{
 			var condition : *, name : String, parts : Array;
@@ -441,6 +444,9 @@ package com.huafu.sql.query
 		}
 		
 		
+		/**
+		 * Add columns or tables to the given list
+		 */
 		private function _add( data : Array, destination : Array ) : void
 		{
 			var thing : *, name : String;
