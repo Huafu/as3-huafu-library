@@ -1,6 +1,7 @@
 package com.huafu.sql.orm
 {
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.query.SQLiteQuery;
 
 	/**
 	 * Describe and handle a "has many using" relation property in a model
@@ -88,18 +89,21 @@ package com.huafu.sql.orm
 		 */
 		override public function setupOrmObject( ormObject : ORM, dataObject : Object, resultRow : Object ) : void
 		{
-			var iterator : ORMIterator, stmt : SQLiteStatement, sql : String;
+			var iterator : ORMIterator, stmt : SQLiteStatement, q : SQLiteQuery;
 			if ( !dataObject[propertyName] )
 			{
 				relatedOrmDescriptor.globalOrmInstance.excludeSoftDeleted = usingOrmDescriptor.globalOrmInstance.excludeSoftDeleted = ormObject.excludeSoftDeleted;
-				sql = "SELECT r.*, u." + usingOrmDescriptor.primaryKeyProperty.columnName
-					+ " AS __using_pk_value FROM " + relatedOrmDescriptor.tableName + " AS r, "
-					+ usingOrmDescriptor.tableName + " AS u WHERE u." + relationToRelated.columnName + " = "
-					+ relationToRelated.relatedColumnName + " AND u." + relationToMe.columnName + " = :"
-					+ columnName
-					+ relatedOrmDescriptor.globalOrmInstance.getDeletedCondition(" AND ")
-					+ usingOrmDescriptor.globalOrmInstance.getDeletedCondition(" AND ");
-				stmt = relatedOrmDescriptor.connection.createStatement(ORM.PREPEND_SQL_COMMENT + sql);
+				q = relatedOrmDescriptor.globalOrmInstance.getQuery();
+				q.select("r.*", usingOrmDescriptor.primaryKeyProperty.columnName + " AS __using_pk_value")
+					.from(
+						relatedOrmDescriptor.tableName + " AS r",
+						usingOrmDescriptor.tableName + " AS u")
+					.where(
+						"u." + relationToRelated.columnName + " = "	+ relationToRelated.relatedColumnName,
+						"u." + relationToMe.columnName + " = :" + columnName,
+						relatedOrmDescriptor.globalOrmInstance.getDeletedCondition(),
+						usingOrmDescriptor.globalOrmInstance.getDeletedCondition());
+				stmt = q.compile();
 				stmt.bind(columnName, null);
 				iterator = new ORMIterator(relatedOrmClass, stmt, dataObject);
 				dataObject[propertyName] = iterator;
