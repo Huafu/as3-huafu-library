@@ -27,6 +27,11 @@ package com.huafu.sql.orm
 		function get columnName() : String;
 		
 		/**
+		 * Name of the property in the model
+		 */
+		function get propertyName() : String;
+		
+		/**
 		 * The related ORM descriptor for this relation
 		 */
 		function get relatedOrmDescriptor() : ORMDescriptor;

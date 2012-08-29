@@ -323,7 +323,7 @@ package com.huafu.sql.orm
 			// load normal properties
 			for each ( prop in _propertiesByName )
 			{
-				if ( result.hasOwnProperty(prop.columnName) )
+				if ( result && result.hasOwnProperty(prop.columnName) )
 				{
 					dataObject[prop.name] = result[prop.columnName];
 				}
@@ -335,7 +335,14 @@ package com.huafu.sql.orm
 			// prepare for relation properties
 			for each ( relation in _relatedTo )
 			{
-				relation.setupOrmObject(object, dataObject, result);
+				if ( result )
+				{
+					relation.setupOrmObject(object, dataObject, result);
+				}
+				else
+				{
+					dataObject[relation.propertyName] = null;
+				}
 			}
 		}
 		
