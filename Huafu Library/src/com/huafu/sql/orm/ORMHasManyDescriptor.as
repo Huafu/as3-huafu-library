@@ -1,6 +1,8 @@
 package com.huafu.sql.orm
 {
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.query.SQLiteCondition;
+	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionProperty;
 
 	/**
@@ -66,16 +68,19 @@ package com.huafu.sql.orm
 		 */
 		public function setupOrmObject( ormObject : ORM, dataObject : Object, resultRow : Object ) : void
 		{
-			var res : ORMIterator, stmt : SQLiteStatement, sql : String;
+			var res : ORMIterator, stmt : SQLiteStatement,
+				q : SQLiteQuery, orm : ORM;
 			if ( dataObject[propertyName] )
 			{
 				return;
 			}
-			ormDescriptor.globalOrmInstance.excludeSoftDeleted = ormObject.excludeSoftDeleted;
-			sql = "SELECT * FROM " + relatedOrmDescriptor.tableName + " WHERE "
-				+ relatedColumnName + " = :" + propertyName
-				+ ormDescriptor.globalOrmInstance.getDeletedCondition(" AND ");
-			stmt = ormObject.connection.createStatement(ORM.PREPEND_SQL_COMMENT + sql, true);
+			orm = ormDescriptor.globalOrmInstance;
+			orm.excludeSoftDeleted = ormObject.excludeSoftDeleted;
+			
+			q = ormObject.getQuery().from(relatedOrmDescriptor.tableName)
+				.where(relatedColumnName + " = :" + propertyName)
+				.andWhere(orm.getDeletedCondition());
+			stmt = q.compile();
 			// set the parameter to something so that the ORMIterator can detect it and bind it
 			stmt.bind(propertyName, null);
 			res = new ORMIterator(ormDescriptor.ormClass, stmt, dataObject);

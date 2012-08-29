@@ -686,7 +686,7 @@ package com.huafu.sql.orm
 		 * 
 		 * @return The query object already instancied or newly created
 		 */
-		private function getQuery( cachedStatements : Boolean = true ) : SQLiteQuery
+		internal function getQuery( cachedStatements : Boolean = true ) : SQLiteQuery
 		{
 			var res : SQLiteQuery = cachedStatements ? _query : _notCachedQuery;
 			if ( !res )
