@@ -466,6 +466,11 @@ package com.huafu.sql.query
 			}
 			for each ( condition in conditions )
 			{
+				// jump on empty conditions
+				if ( !condition || condition == "" )
+				{
+					continue;
+				}
 				if ( ReflectionClass.isStrictly(condition, Object) )
 				{
 					for ( name in condition )
