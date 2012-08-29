@@ -204,11 +204,11 @@ package com.huafu.sql.orm
 		{
 			var res : Array, ev : ORMEvent,
 				sql : String, params : Object = {},
-				q : SQLiteQuery = getQuery();
+				q : SQLiteQuery = getPreparedQuery();
 			
 			params[primaryKeyColumnName] = id;
 			_reset();
-			res = q.from(ormDescriptor.tableName).where(params).andWhere(getDeletedCondition()).get();
+			res = q.where(params).get();
 			if ( res.length == 0 )
 			{
 				return false;
@@ -264,11 +264,10 @@ package com.huafu.sql.orm
 		 */
 		public function findAll( params : Object = null, orderBy : Object = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
-			var q : SQLiteQuery = getQuery().from(ormDescriptor.tableName), value : *,
+			var q : SQLiteQuery = getPreparedQuery(), value : *,
 				name : String, prop : ORMPropertyDescriptor,
 				nameParts : Array, op : String;
 			
-			q.where(getDeletedCondition());
 			for ( name in (params || {}) )
 			{
 				value = params[name];
@@ -321,9 +320,9 @@ package com.huafu.sql.orm
 		 */
 		public function findAllBySql( whereSql : String, params : Object = null, orderBySql : String = null, groupBySql : String = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
-			var q : SQLiteQuery = getQuery().from(ormDescriptor.tableName);
+			var q : SQLiteQuery = getPreparedQuery();
 			
-			q.where(getDeletedCondition()).andWhere(new SQLiteCondition(whereSql, params || {}));
+			q.where(new SQLiteCondition(whereSql, params || {}));
 			if ( groupBySql )
 			{
 				q.groupBy(groupBySql);
@@ -622,6 +621,17 @@ package com.huafu.sql.orm
 				_reset();
 			}
 			return res;
+		}
+		
+		
+		/**
+		 * Get a query object where the from and the possible soft deleted rows condition are already defined
+		 * 
+		 * @return The prepared query
+		 */
+		public function getPreparedQuery() : SQLiteQuery
+		{
+			return getQuery().from(ormDescriptor.tableName).where(getDeletedCondition());
 		}
 		
 		
