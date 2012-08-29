@@ -2,6 +2,7 @@ package com.huafu.sql.query
 {
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.orm.ORMIterator;
 	import com.huafu.utils.reflection.ReflectionClass;
 	
 	import flash.data.SQLResult;
@@ -430,6 +431,18 @@ package com.huafu.sql.query
 			var stmt : SQLiteStatement = compile();
 			stmt.safeExecute();
 			return stmt.getResult().data;
+		}
+		
+		
+		/**
+		 * Compile, execute and get the results of the query
+		 * 
+		 * @param ormClass The ORM class we want an iterator of
+		 * @return The ORMIterator of all results
+		 */
+		public function getAsOrmIterator( ormClass : Class = null ) : ORMIterator
+		{
+			return new ORMIterator(ormClass, get());
 		}
 		
 		
