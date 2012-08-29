@@ -154,10 +154,18 @@ package com.huafu.sql.orm
 		 * The SQL connection used for the related table
 		 */
 		private var _connection : SQLiteConnection;
-		
+		/**
+		 * Whether to exclude soft deleted rows or not in all commands
+		 */
 		public var excludeSoftDeleted : Boolean;
 		
 		
+		/**
+		 * Instanciate a new ORM object. DON'T CALL DIRECTLY, use ORM.factory instead
+		 * 
+		 * @param ormClass The class of the ORM object to create
+		 * @param _dummy Used internally
+		 */
 		public function ORM( ormClass : Class, _dummy : Object )
 		{
 			excludeSoftDeleted = true;
