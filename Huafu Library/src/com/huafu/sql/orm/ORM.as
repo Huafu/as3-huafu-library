@@ -726,21 +726,6 @@ package com.huafu.sql.orm
 		
 		
 		/**
-		 * Add the condition for the possible deleted columns if needed
-		 * 
-		 * @param query The query to add condition to
-		 */
-		public function addDeletedCondition( query : SQLiteQuery ) : void
-		{
-			if ( !excludeSoftDeleted || !ormDescriptor.deletedAtProperty )
-			{
-				return;
-			}
-			query.andWhere(ormDescriptor.deletedAtProperty.columnName + " IS NULL");
-		}
-		
-		
-		/**
 		 * Create a new instance of the given ORM model
 		 * 
 		 * @param ormClass The class of the ORM instance to create
