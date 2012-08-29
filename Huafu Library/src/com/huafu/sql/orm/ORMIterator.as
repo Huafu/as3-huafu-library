@@ -7,8 +7,6 @@ package com.huafu.sql.orm
 	import flash.errors.IllegalOperationError;
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
-	
-	import mx.collections.ArrayList;
 
 	/**
 	 * Used to browse a result with rows that each contains an ORM object
@@ -18,7 +16,7 @@ package com.huafu.sql.orm
 		/**
 		 * The data which is browsed is stored here
 		 */
-		internal var _data : ArrayList;
+		internal var _data : Array;
 		/**
 		 * The statement object
 		 */
@@ -64,7 +62,7 @@ package com.huafu.sql.orm
 			}
 			else
 			{
-				_data = new ArrayList(((_statement ? _statement.getResult().data : statementOrData) as Array).slice());
+				_data = ((_statement ? _statement.getResult().data : statementOrData) as Array).slice();
 			}
 			_ormClass = ormClass;
 		}
@@ -96,6 +94,17 @@ package com.huafu.sql.orm
 				res.push(item);
 			}
 			return res;
+		}
+		
+		
+		/**
+		 * The object used to bind parameters
+		 */
+		public function set sourceUsedToReload( object : Object ) : void
+		{
+			_objectUsedToReaload = object;
+			// invalidate the data
+			_data  = null;
 		}
 		
 		
@@ -156,26 +165,22 @@ package com.huafu.sql.orm
 		 */
 		internal function _load() : void
 		{
-			var name : String, cleanName : String, paramsDiffers : Boolean = false;
+			var name : String, cleanName : String;
 			// (re)bind the parameters
 			for ( name in _statement.parameters )
 			{
 				cleanName = name.substr(1);
 				if ( _objectUsedToReaload.hasOwnProperty(cleanName) )
 				{
-					if ( !paramsDiffers && _statement.parameters[name] != _objectUsedToReaload[cleanName] )
-					{
-						paramsDiffers = true;
-					}
 					_statement.parameters[name] = _objectUsedToReaload[cleanName];
 				}
 			}
 			// re-execute only if the parameters are new, or no data yet, or force reload on
 			// every new iteration
-			if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
+			if ( _loadOnEveryNewIteration || !_data )
 			{
 				_statement.safeExecute();
-				_data = new ArrayList(_statement.getResult().data.slice());
+				_data = _statement.getResult().data.slice();
 			}
 		}
 		
@@ -189,11 +194,11 @@ package com.huafu.sql.orm
 		private function _get( index : int ) : ORM
 		{
 			var res : ORM, v : *;
-			if ( !((v = _data.getItemAt(index)) is ORM) )
+			if ( !((v = _data[index]) is ORM) )
 			{
 				res = ORM.factory(_ormClass);
 				res.loadDataFromSqlResult(v);
-				_data.setItemAt(res, index);
+				_data[index] = res;
 				return res;
 			}
 			return v;
