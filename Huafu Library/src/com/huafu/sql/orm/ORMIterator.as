@@ -64,7 +64,7 @@ package com.huafu.sql.orm
 			}
 			else
 			{
-				_data = new ArrayList(_statement ? _statement.getResult().data : statementOrData);
+				_data = new ArrayList(((_statement ? _statement.getResult().data : statementOrData) as Array).slice());
 			}
 			_ormClass = ormClass;
 		}
@@ -175,7 +175,7 @@ package com.huafu.sql.orm
 			if ( _loadOnEveryNewIteration || !_data || paramsDiffers )
 			{
 				_statement.safeExecute();
-				_data = new ArrayList(_statement.getResult().data);
+				_data = new ArrayList(_statement.getResult().data.slice());
 			}
 		}
 		
