@@ -30,39 +30,51 @@ package com.huafu.sql.query
 		/**
 		 * List of fields
 		 */
-		internal var fieldList : Array;
+		internal var _fieldList : Array;
 		/**
 		 * List of tables
 		 */
-		internal var tableList : Array;
+		internal var _tableList : Array;
 		/**
 		 * The conditions for the where part
 		 */
-		internal var conditions : SQLiteConditionGroup;
+		internal var _conditions : SQLiteConditionGroup;
 		/**
 		 * The list of group by
 		 */
-		internal var groupByList : Array;
+		internal var _groupByList : Array;
 		/**
 		 * THe list of order by
 		 */
-		internal var orderByList : Array;
+		internal var _orderByList : Array;
 		/**
 		 * The conditions of the having part
 		 */
-		internal var havings : SQLiteConditionGroup;
+		internal var _havings : SQLiteConditionGroup;
 		/**
 		 * The limit part
 		 */
-		internal var limitCount : int;
+		internal var _limitCount : int;
 		/**
 		 * The offset part
 		 */
-		internal var limitOffset : int;
+		internal var _limitOffset : int;
 		/**
 		 * Stores whether the last function call was related to having or to where
 		 */
-		internal var inHaving : Boolean;
+		internal var _inHaving : Boolean;
+		/**
+		 * The comment prepending any query
+		 */
+		internal var _prependingComment : String;
+		/**
+		 * Whether to use cached statements or not
+		 */
+		internal var _useCachedStatements : Boolean;
+		/**
+		 * The statement if compiled and nothing changed
+		 */
+		internal var _statement : SQLiteStatement;
 		
 		/**
 		 * The connection used to execute the query
@@ -74,12 +86,14 @@ package com.huafu.sql.query
 		 * Creates a new query object
 		 * 
 		 * @param connection The SQL connection to use when executing the query
+		 * @param useCachedStatements Whether to use cached statements or not
+		 * @param prependQueriesWithComment If given, the string will be put in a comment before each statemetns
 		 */
-		public function SQLiteQuery( connection : SQLiteConnection = null )
+		public function SQLiteQuery( connection : SQLiteConnection = null, useCachedStatements : Boolean = false, prependQueriesWithComment : String = null )
 		{
 			this.connection = connection;
-			conditions = new SQLiteConditionGroup();
-			havings = new SQLiteConditionGroup();
+			_conditions = new SQLiteConditionGroup();
+			_havings = new SQLiteConditionGroup();
 			reset();
 		}
 		
@@ -94,7 +108,8 @@ package com.huafu.sql.query
 		 */
 		public function select( ... fields : Array ) : SQLiteQuery
 		{
-			_add(fields, fieldList);
+			_add(fields, _fieldList);
+			_statement = null;
 			return this;
 		}
 		
@@ -107,7 +122,8 @@ package com.huafu.sql.query
 		 */
 		public function from( ... tables : Array ) : SQLiteQuery
 		{
-			_add(tables, tableList);
+			_add(tables, _tableList);
+			_statement = null;
 			return this;
 		}
 		
@@ -120,8 +136,9 @@ package com.huafu.sql.query
 		 */
 		public function where( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = false;
-			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
+			_inHaving = false;
+			_where(this._conditions, SQLiteConditionGroup.AND, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -139,8 +156,9 @@ package com.huafu.sql.query
 		 */
 		public function andWhere( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = false;
-			_where(this.conditions, SQLiteConditionGroup.AND, conditions);
+			_inHaving = false;
+			_where(this._conditions, SQLiteConditionGroup.AND, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -154,8 +172,9 @@ package com.huafu.sql.query
 		 */
 		public function orWhere( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = false;
-			_where(this.conditions, SQLiteConditionGroup.OR, conditions);
+			_inHaving = false;
+			_where(this._conditions, SQLiteConditionGroup.OR, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -169,8 +188,9 @@ package com.huafu.sql.query
 		 */
 		public function having( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = true;
-			_where(havings, SQLiteConditionGroup.AND, conditions);
+			_inHaving = true;
+			_where(_havings, SQLiteConditionGroup.AND, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -184,8 +204,9 @@ package com.huafu.sql.query
 		 */
 		public function andHaving( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = true;
-			_where(havings, SQLiteConditionGroup.AND, conditions);
+			_inHaving = true;
+			_where(_havings, SQLiteConditionGroup.AND, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -199,8 +220,9 @@ package com.huafu.sql.query
 		 */
 		public function orHaving( ... conditions : Array ) : SQLiteQuery
 		{
-			inHaving = true;
-			_where(havings, SQLiteConditionGroup.OR, conditions);
+			_inHaving = true;
+			_where(_havings, SQLiteConditionGroup.OR, conditions);
+			_statement = null;
 			return this;
 		}
 		
@@ -215,16 +237,17 @@ package com.huafu.sql.query
 		public function openBracket( logicOperator : String = SQLiteConditionGroup.AND ) : SQLiteQuery
 		{
 			var group : SQLiteConditionGroup = new SQLiteConditionGroup();
-			if ( inHaving )
+			if ( _inHaving )
 			{
-				havings.add(group, logicOperator);
-				havings = group;
+				_havings.add(group, logicOperator);
+				_havings = group;
 			}
 			else
 			{
-				conditions.add(group, logicOperator);
-				conditions = group;
+				_conditions.add(group, logicOperator);
+				_conditions = group;
 			}
+			_statement = null;
 			return this;
 		}
 		
@@ -236,14 +259,15 @@ package com.huafu.sql.query
 		 */
 		public function closeBracket() : SQLiteQuery
 		{
-			if ( inHaving )
+			if ( _inHaving )
 			{
-				havings = havings.ownerGroup;
+				_havings = _havings.ownerGroup;
 			}
 			else
 			{
-				conditions = conditions.ownerGroup;
+				_conditions = _conditions.ownerGroup;
 			}
+			_statement = null;
 			return this;
 		}
 		
@@ -272,19 +296,20 @@ package com.huafu.sql.query
 					{
 						if ( field[name].match(/^\s*desc\s*$/i) )
 						{
-							orderByList.push(name + " DESC");
+							_orderByList.push(name + " DESC");
 						}
 						else
 						{
-							orderByList.push(name + " ASC");
+							_orderByList.push(name + " ASC");
 						}
 					}
 				}
 				else
 				{
-					orderByList.push(field);
+					_orderByList.push(field);
 				}
 			}
+			_statement = null;
 			return this;
 		}
 		
@@ -304,7 +329,8 @@ package com.huafu.sql.query
 			{
 				fields = fields[0];
 			}
-			groupByList.push.apply(groupByList, fields);
+			_groupByList.push.apply(_groupByList, fields);
+			_statement = null;
 			return this;
 		}
 		
@@ -318,8 +344,8 @@ package com.huafu.sql.query
 		 */
 		public function limit( count : int, offset : int = 0 ) : SQLiteQuery
 		{
-			limitCount = count;
-			limitOffset = offset;
+			_limitCount = count;
+			_limitOffset = offset;
 			return this;
 		}
 		
@@ -332,10 +358,22 @@ package com.huafu.sql.query
 		public function compile() : SQLiteStatement
 		{
 			var params : SQLiteParameters = new SQLiteParameters,
-				res : SQLiteStatement = connection.createStatement();
-			res.text = sqlCode(params);
-			params.bindTo(res);
-			return res;
+				sql : String = sqlCode(params);
+			if ( !_statement )
+			{
+				_statement = connection.createStatement(sql, !_useCachedStatements);
+			}
+			_statement.clearParameters();
+			if ( _limitCount )
+			{
+				params.bind(_limitCount);
+				if ( _limitOffset )
+				{
+					params.bind(_limitOffset);
+				}
+			}
+			params.bindTo(_statement);
+			return _statement;
 		}
 		
 		
@@ -349,30 +387,34 @@ package com.huafu.sql.query
 		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
 		{
 			var sql : String;
-			sql = "SELECT " + (fieldList.length == 0 ? "*" : fieldList.join(", ")) + " FROM " + tableList.join(", ");
-			if ( conditions.length > 0 )
+			sql = "SELECT " + (_fieldList.length == 0 ? "*" : _fieldList.join(", ")) + " FROM " + _tableList.join(", ");
+			if ( _conditions.length > 0 )
 			{
-				sql += " WHERE " + conditions.sqlCode(parametersDestination);
+				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
 			}
-			if ( groupByList.length > 0 )
+			if ( _groupByList.length > 0 )
 			{
-				sql += " GROUP BY " + groupByList.join(", ");
+				sql += " GROUP BY " + _groupByList.join(", ");
 			}
-			if ( havings.length > 0 )
+			if ( _havings.length > 0 )
 			{
-				sql += " HAVING " + havings.sqlCode(parametersDestination);
+				sql += " HAVING " + _havings.sqlCode(parametersDestination);
 			}
-			if ( orderByList.length > 0 )
+			if ( _orderByList.length > 0 )
 			{
-				sql += " ORDER BY " + orderByList.join(", ");
+				sql += " ORDER BY " + _orderByList.join(", ");
 			}
-			if ( limitCount )
+			if ( _limitCount )
 			{
-				sql += " LIMIT " + limitCount;
-				if ( limitOffset )
+				sql += " LIMIT ?";
+				if ( _limitOffset )
 				{
-					sql += ", " + limitOffset;
+					sql += ", ?";
 				}
+			}
+			if ( _prependingComment )
+			{
+				sql = "/* " + _prependingComment + " */ " + sql;
 			}
 			return sql;
 		}
@@ -398,15 +440,16 @@ package com.huafu.sql.query
 		 */
 		public function reset() : SQLiteQuery
 		{
-			fieldList = new Array();
-			tableList = new Array();
-			conditions.reset();
-			groupByList = new Array();
-			orderByList = new Array();
-			limitCount = 0;
-			limitOffset = 0;
-			havings.reset();
-			inHaving = false;
+			_fieldList = new Array();
+			_tableList = new Array();
+			_conditions.reset();
+			_groupByList = new Array();
+			_orderByList = new Array();
+			_limitCount = 0;
+			_limitOffset = 0;
+			_havings.reset();
+			_statement = null;
+			_inHaving = false;
 			return this;
 		}
 		
