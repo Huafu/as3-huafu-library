@@ -63,7 +63,7 @@ package com.huafu.sql.query
 			{
 				return new SQLiteCondition(arrayOrCondition[0], arrayOrCondition[1]);
 			}
-			return SQLiteCondition(arrayOrCondition);
+			return new SQLiteCondition(arrayOrCondition);
 		}
 	}
 }
