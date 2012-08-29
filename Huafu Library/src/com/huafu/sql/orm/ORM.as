@@ -4,6 +4,8 @@ package com.huafu.sql.orm
 	
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.query.SQLiteCondition;
+	import com.huafu.sql.query.SQLiteQuery;
 	
 	import flash.data.SQLResult;
 	import flash.errors.IllegalOperationError;
@@ -105,7 +107,7 @@ package com.huafu.sql.orm
 		/**
 		 * The SQL comment prepended to each statement to be sure to have independant SQL staetment cache
 		 */
-		public static const PREPEND_SQL_COMMENT : String = "/*HORM*/ ";
+		public static const PREPEND_SQL_COMMENT : String = "HORM";
 
 		/**
 		 * Used to avoid the coder to instanciate directly the class without using the factory static method
@@ -155,6 +157,14 @@ package com.huafu.sql.orm
 		 */
 		private var _connection : SQLiteConnection;
 		/**
+		 * The query object used, using cached statements
+		 */
+		private var _query : SQLiteQuery;
+		/**
+		 * The query object used, using not cached statements
+		 */
+		private var _notCachedQuery : SQLiteQuery;
+		/**
 		 * Whether to exclude soft deleted rows or not in all commands
 		 */
 		public var excludeSoftDeleted : Boolean;
@@ -192,22 +202,18 @@ package com.huafu.sql.orm
 		 */
 		public function find( id : int ) : Boolean
 		{
-			var res : SQLResult, ev : ORMEvent,
-				sql : String,
-				stmt : SQLiteStatement;
-			sql = "SELECT * FROM " + ormDescriptor.tableName
-				+ " WHERE " + primaryKeyColumnName + " = :" + primaryKeyPropertyName
-				+ getDeletedCondition(" AND ");
-			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql);
+			var res : Array, ev : ORMEvent,
+				sql : String, params : Object = {},
+				q : SQLiteQuery = getQuery();
+			
+			params[primaryKeyColumnName] = id;
 			_reset();
-			stmt.bind(primaryKeyPropertyName, id);
-			stmt.safeExecute();
-			res = stmt.getResult();
-			if ( res.data.length == 0 )
+			res = q.from(ormDescriptor.tableName).where(params).andWhere(getDeletedCondition()).get();
+			if ( res.length == 0 )
 			{
 				return false;
 			}
-			loadDataFromSqlResult(stmt.getResult().data[0]);
+			loadDataFromSqlResult(res[0]);
 			
 			ev = new ORMEvent(ORMEvent.LOADED);
 			dispatchEvent(ev);
@@ -258,15 +264,11 @@ package com.huafu.sql.orm
 		 */
 		public function findAll( params : Object = null, orderBy : Object = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
-			var sql : String = "SELECT * FROM " + ormDescriptor.tableName, value : *,
-				_params : Array = new Array(), name : String, prop : ORMPropertyDescriptor,
-				nameParts : Array, op : String, stmt : SQLiteStatement, binds : Object = {},
-				deletedCondition : String;
+			var q : SQLiteQuery = getQuery().from(ormDescriptor.tableName), value : *,
+				name : String, prop : ORMPropertyDescriptor,
+				nameParts : Array, op : String;
 			
-			if ( (deletedCondition = getDeletedCondition()) )
-			{
-				_params.push(deletedCondition);
-			}
+			q.where(getDeletedCondition());
 			for ( name in (params || {}) )
 			{
 				value = params[name];
@@ -283,39 +285,26 @@ package com.huafu.sql.orm
 				prop = ormDescriptor.propertyDescriptor(name);
 				if ( value === null )
 				{
-					_params.push(prop.columnName + " IS" + (op == "!=" ? " NOT" : "") + " NULL");
+					q.andWhere(prop.columnName + " IS" + (op == "!=" ? " NOT" : "") + " NULL");
 				}
 				else
 				{
-					_params.push(prop.columnName + " " + op + " :" + name);
-					binds[name] = value;
+					q.andWhere(new SQLiteCondition(prop.columnName + " " + op + " ?", value));
 				}
-			}
-			if ( _params.length > 0 )
-			{
-				sql += " WHERE " + _params.join(" AND ");
 			}
 			if ( orderBy )
 			{
-				_params = new Array();
 				for ( name in orderBy )
 				{
 					prop = ormDescriptor.propertyDescriptor(name);
-					_params.push(prop.columnName + " " + (!orderBy[name] || String(orderBy[name]).toUpperCase() == "DESC" ? "DESC" : "ASC"));
-				}
-				if ( _params.length > 0 )
-				{
-					sql += " ORDER BY " + _params.join(", ");
+					q.orderBy(prop.columnName + " " + (!orderBy[name] || String(orderBy[name]).toUpperCase() == "DESC" ? "DESC" : "ASC"));
 				}
 			}
 			if ( limit > 0 )
 			{
-				sql += " LIMIT " + limit + ", " + offset;
+				q.limit(limit, offset);
 			}
-			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql);
-			stmt.bind(binds);
-			stmt.safeExecute();
-			return new ORMIterator(ormClass, stmt);
+			return q.getAsOrmIterator(ormClass);
 		}
 		
 		
@@ -332,29 +321,22 @@ package com.huafu.sql.orm
 		 */
 		public function findAllBySql( whereSql : String, params : Object = null, orderBySql : String = null, groupBySql : String = null, limit : int = -1, offset : int = 1 ) : ORMIterator
 		{
-			var sql : String = "SELECT * FROM " + ormDescriptor.tableName,
-				stmt : SQLiteStatement,
-				newWhere : String = getDeletedCondition(null, whereSql ? " AND " : null) + (whereSql ? whereSql : "");
-			if ( whereSql && whereSql != "" )
-			{
-				sql += " WHERE " + whereSql;
-			}
+			var q : SQLiteQuery = getQuery().from(ormDescriptor.tableName);
+			
+			q.where(getDeletedCondition()).andWhere(new SQLiteCondition(whereSql, params || {}));
 			if ( groupBySql )
 			{
-				sql += " GROUP BY " + groupBySql;
+				q.groupBy(groupBySql);
 			}
 			if ( orderBySql )
 			{
-				sql += " ORDER BY " + orderBySql;
+				q.orderBy(orderBySql);
 			}
 			if ( limit > 0 )
 			{
-				sql += " LIMIT " + limit + ", " + offset;
+				q.limit(limit, offset);
 			}
-			stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
-			stmt.bind(params || {});
-			stmt.safeExecute();
-			return new ORMIterator(ormClass, stmt);
+			return q.getAsOrmIterator(ormClass);
 		}
 		
 		
@@ -700,6 +682,31 @@ package com.huafu.sql.orm
 		
 		
 		/**
+		 * Get the query object to use and reset it
+		 * 
+		 * @return The query object already instancied or newly created
+		 */
+		private function getQuery( cachedStatements : Boolean = true ) : SQLiteQuery
+		{
+			var res : SQLiteQuery = cachedStatements ? _query : _notCachedQuery;
+			if ( !res )
+			{
+				res = new SQLiteQuery(connection, cachedStatements, PREPEND_SQL_COMMENT);
+				if ( cachedStatements )
+				{
+					_query = res;;
+				}
+				else
+				{
+					_notCachedQuery = res;
+				}
+			}
+			res.reset();
+			return res;
+		}
+		
+		
+		/**
 		 * Get the condition SQL string to handle soft deleted records
 		 * 
 		 * @param prepend The string to prepend to the condition
@@ -715,6 +722,21 @@ package com.huafu.sql.orm
 			}
 			return (prepend ? prepend : "") + ormDescriptor.deletedAtProperty.columnName + " IS NULL"
 				+ (append ? append : "");
+		}
+		
+		
+		/**
+		 * Add the condition for the possible deleted columns if needed
+		 * 
+		 * @param query The query to add condition to
+		 */
+		public function addDeletedCondition( query : SQLiteQuery ) : void
+		{
+			if ( !excludeSoftDeleted || !ormDescriptor.deletedAtProperty )
+			{
+				return;
+			}
+			query.andWhere(ormDescriptor.deletedAtProperty.columnName + " IS NULL");
 		}
 		
 		
