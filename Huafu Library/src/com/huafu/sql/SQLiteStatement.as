@@ -1,6 +1,7 @@
 package com.huafu.sql
 {
 	import flash.data.SQLStatement;
+	import flash.errors.IllegalOperationError;
 	import flash.errors.SQLError;
 	import flash.events.SQLErrorEvent;
 	import flash.net.Responder;
@@ -13,18 +14,39 @@ package com.huafu.sql
 	public class SQLiteStatement extends SQLStatement
 	{
 		/**
+		 * To avoid user to create a cached statement without calling the SQLiteConnection.createStatement method
+		 */
+		internal static var _creatingStatement : Boolean = false;
+		
+		/**
 		 * Stores the last error that occurres or null if the last execute call doesn't throw any error
 		 */
 		private var _lastError : SQLError;
+		/**
+		 * Stores whether the statement is cached or not
+		 */
+		private var _cached : Boolean;
 		
 		
 		/**
 		 * Constructor
+		 * 
+		 * @param cached Used internally
 		 */
-		public function SQLiteStatement()
+		public function SQLiteStatement( text : String = null, cached : Boolean = false )
 		{
 			super();
+			if ( cached && !_creatingStatement )
+			{
+				throw new IllegalOperationError("Trying to create a cached statement without using the createStatement() helper from the SQLiteConnection class");
+			}
+			_creatingStatement = false;
 			_lastError = null;
+			if ( text )
+			{
+				super.text = text;
+			}
+			_cached = cached;
 			addEventListener(SQLErrorEvent.ERROR, _sqlErrorHandler);
 		}
 		
@@ -84,6 +106,20 @@ package com.huafu.sql
 				}
 			}
 			return this;
+		}
+		
+		
+		/**
+		 * SQL code of the query
+		 * @inheritDoc
+		 */
+		override public function set text( value : String ) : void
+		{
+			if ( _cached )
+			{
+				throw new IllegalOperationError("Trying to change the text property of a cached statement");
+			}
+			super.text = value;
 		}
 		
 		

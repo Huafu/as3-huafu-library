@@ -112,9 +112,9 @@ package com.huafu.sql
 				res.clearParameters();
 				return res;
 			}
-			res = new SQLiteStatement();
+			SQLiteStatement._creatingStatement = true;
+			res = new SQLiteStatement(sql, !noCache);
 			res.sqlConnection = this;
-			res.text = sql;
 			if ( !(noCache || !sql) )
 			{
 				_stmtCache.set(sql, res);
