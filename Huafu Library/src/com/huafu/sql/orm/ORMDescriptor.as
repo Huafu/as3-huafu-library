@@ -4,6 +4,7 @@ package com.huafu.sql.orm
 	
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.orm.relation.IORMRelation;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
@@ -268,12 +269,14 @@ package com.huafu.sql.orm
 		 * @param relationClass If specified, it'll look for a relation having strictly the given class
 		 * @return Returns the desired relation or null if no such defined
 		 */
-		public function getRelationTo( toWhat : ORMDescriptor, relationClass : Class = null ) : IORMRelationDescriptor
+		public function getRelationTo( toWhat : ORMDescriptor, toWhatColumnName : String = null, relationClass : Class = null ) : IORMRelation
 		{
-			var rel : IORMRelationDescriptor;
+			var rel : IORMRelation;
 			for each ( rel in _relatedTo )
 			{
-				if ( rel.relatedOrmDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel, relationClass)) )
+				if ( rel.foreignDescriptor === toWhat
+					&& (!relationClass || ReflectionClass.isStrictly(rel, relationClass))
+					&& (!toWhatColumnName || toWhatColumnName == rel.foreignColumnName) )
 				{
 					return rel;
 				}
