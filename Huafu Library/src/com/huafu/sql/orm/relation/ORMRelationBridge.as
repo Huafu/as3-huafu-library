@@ -7,7 +7,11 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
+
 	
+	/**
+	 * Handle relations that are using a bridge table
+	 */	
 	public class ORMRelationBridge extends ORMRelation implements IORMRelation
 	{
 		protected var _localToUsing : IORMRelation;
@@ -17,6 +21,9 @@ package com.huafu.sql.orm.relation
 		protected var _usingOrmClassName : String;
 		protected var _usingOrmDescriptor : ORMDescriptor;
 		
+		/**
+		 * @copy ORMRelation#ORMRelation()
+		 */		
 		public function ORMRelationBridge( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			super(ownerDescriptor, property, metadata);
@@ -26,6 +33,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * The descriptor of the bridge ORM
+		 */		
 		public function get usingDescriptor() : ORMDescriptor
 		{
 			if ( !_usingOrmDescriptor )
@@ -35,6 +45,10 @@ package com.huafu.sql.orm.relation
 			return _usingOrmDescriptor;
 		}
 		
+		
+		/**
+		 * The class of the bridge ORM
+		 */
 		public function get usingOrmClass() : Class
 		{
 			if ( !_usingOrmClass )
@@ -44,6 +58,10 @@ package com.huafu.sql.orm.relation
 			return _usingOrmClass;
 		}
 		
+		
+		/**
+		 * The relation object from the bridge to the foreign ORM
+		 */
 		public function get usingToForeignRelation() : IORMRelation
 		{
 			if ( !_usingToForeign )
@@ -53,6 +71,10 @@ package com.huafu.sql.orm.relation
 			return _usingToForeign;
 		}
 		
+		
+		/**
+		 * The relation object from the owner ORM to the bridge ORM
+		 */
 		public function get ownerToUsingRelation() : IORMRelation
 		{
 			if ( !_localToUsing )
@@ -62,6 +84,10 @@ package com.huafu.sql.orm.relation
 			return _localToUsing;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignColumnName
+		 */
 		override public function get foreignColumnName() : String
 		{
 			if ( !_foreignColumnName )
@@ -71,6 +97,10 @@ package com.huafu.sql.orm.relation
 			return _foreignColumnName;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignRelation
+		 */
 		override public function get foreignRelation() : IORMRelation
 		{
 			if ( !_foreignRelation )
@@ -80,6 +110,10 @@ package com.huafu.sql.orm.relation
 			return _foreignRelation;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#localColumnName
+		 */
 		override public function get localColumnName() : String
 		{
 			if ( !_localColumnName )
@@ -89,6 +123,10 @@ package com.huafu.sql.orm.relation
 			return _localColumnName;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#getSqlCondition()
+		 */
 		override public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String
 		{
 			return ownerToUsingRelation.getSqlCondition( localTableAlias, usingTableAlias )
@@ -96,12 +134,19 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#setupQueryCondition()
+		 */
 		override public function setupQueryCondition( query : SQLiteQuery, ormObject : ORM, usingData : Object, localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : void
 		{
 			ownerToUsingRelation.setupQueryCondition(query, ormObject, usingData, localTableAlias, usingTableAlias);
 			query.where(usingToForeignRelation.getSqlCondition(usingTableAlias, foreignTableAlias));
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#setupOrmObject()
+		 */
 		public function setupOrmObject(ormObject:ORM, ormObjectData:Object, usingData:Object):void
 		{
 			var res : ORMIterator,

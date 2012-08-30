@@ -11,8 +11,14 @@ package com.huafu.sql.orm.relation
 	
 	import flash.errors.IllegalOperationError;
 	
+	/**
+	 * Handle ORM relation "one to many"
+	 */	
 	public class ORMRelationHasMany extends ORMRelation implements IORMRelation
 	{
+		/**
+		 * @copy ORMRelation#ORMRelation()
+		 */
 		public function ORMRelationHasMany( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			super(ownerDescriptor, property, metadata);
@@ -22,6 +28,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#foreignColumnName
+		 */
 		override public function get foreignColumnName() : String
 		{
 			if ( !_foreignColumnName )
@@ -32,6 +41,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#localColumnName
+		 */
 		override public function get localColumnName() : String
 		{
 			if ( !_localColumnName )
@@ -42,6 +54,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#setupOrmObject()
+		 */
 		public function setupOrmObject(ormObject:ORM, ormObjectData:Object, usingData:Object):void
 		{
 			var res : ORMIterator, foreignOrm : ORM = foreignDescriptor.globalOrmInstance,

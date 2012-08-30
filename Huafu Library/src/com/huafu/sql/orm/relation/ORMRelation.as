@@ -10,6 +10,9 @@ package com.huafu.sql.orm.relation
 	
 	import flash.errors.IllegalOperationError;
 
+	/**
+	 * Base class for any other ORM relation class
+	 */
 	public class ORMRelation
 	{
 		protected var _destinationOrmDescriptor : ORMDescriptor;
@@ -25,6 +28,13 @@ package com.huafu.sql.orm.relation
 		protected var _foreignIsUnique : Boolean;
 		protected var _localColumnSqlCode : String;
 		
+		/**
+		 * Constructor
+		 * 
+		 * @param ownerDescriptor The ORM descriptor owning the relation
+		 * @param property The reflection property owning the relation
+		 * @param metadata The medtadata reflection of the property concerning the relation
+		 */
 		public function ORMRelation( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			_destinationOrmDescriptor = ownerDescriptor;
@@ -33,6 +43,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#foreignColumnProperty
+		 */
 		public function get foreignColumnProperty() : ORMPropertyDescriptor
 		{
 			if ( !_foreignColumnProperty )
@@ -42,16 +55,28 @@ package com.huafu.sql.orm.relation
 			return _foreignColumnProperty;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignIsUnique
+		 */
 		public function get foreignIsUnique() : Boolean
 		{
 			return _foreignIsUnique;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignColumnName
+		 */
 		public function get foreignColumnName() : String
 		{
 			return _foreignColumnName;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignRelation
+		 */
 		public function get foreignRelation() : IORMRelation
 		{
 			if ( !_foreignRelation )
@@ -61,27 +86,46 @@ package com.huafu.sql.orm.relation
 			return _foreignRelation;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#ownerDescriptor
+		 */
 		public function get ownerDescriptor() : ORMDescriptor
 		{
 			return _destinationOrmDescriptor;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#ownerPropertyName
+		 */
 		public function get ownerPropertyName() : String
 		{
 			return _destinationOrmPropertyName;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#localColumnName
+		 */
 		public function get localColumnName() : String
 		{
 			return _localColumnName;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#localColumnSqlCode
+		 */
 		public function get localColumnSqlCode() : String
 		{
 			return _localColumnSqlCode;
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#foreignOrmClass
+		 */
 		public function get foreignOrmClass() : Class
 		{
 			if ( !_foreignOrmClass )
@@ -91,6 +135,10 @@ package com.huafu.sql.orm.relation
 			return _foreignOrmClass;
 		}
 		
+		
+		/**
+		 * @copy IORMRelation#foreignDescriptor
+		 */
 		public function get foreignDescriptor() : ORMDescriptor
 		{
 			if ( !_foreignOrmDescriptor )
@@ -101,6 +149,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#setupQueryCondition()
+		 */
 		public function setupQueryCondition( query : SQLiteQuery, ormObject : ORM, usingData : Object, localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : void
 		{
 			var foreignOrm : ORM = foreignDescriptor.globalOrmInstance;
@@ -119,6 +170,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#getSqlCondition()
+		 */
 		public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String
 		{
 			if ( !localTableAlias )
@@ -162,6 +216,14 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * Read a class name from a metadata argument, 
+		 * 
+		 * @param metadata The metadata containing the argument to read
+		 * @param argName The name of the argument which value is the name of the class
+		 * @return The name of the class read
+		 * @throws IllegalOperationError If no class name defined in the given argument
+		 */
 		internal static function readOrmClassFromMetadataArg( metadata : ReflectionMetadata, argName : String = "class" ) : String
 		{
 			var className : String;

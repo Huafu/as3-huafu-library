@@ -8,10 +8,17 @@ package com.huafu.sql.orm.relation
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
 	
+	
+	/**
+	 * Handle an ORM relation "one to one"
+	 */
 	public class ORMRelationHasOne extends ORMRelation implements IORMRelation
 	{
 		protected var _nullable : Boolean;
 		
+		/**
+		 * @copy ORMRelation#ORMRelation()
+		 */
 		public function ORMRelationHasOne( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			super(ownerDescriptor, property, metadata);
@@ -23,6 +30,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#foreignColumnName
+		 */
 		override public function get foreignColumnName() : String
 		{
 			if ( !_foreignColumnName )
@@ -33,12 +43,18 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * Whether there can be no linked object or not
+		 */
 		public function get isNullable() : Boolean
 		{
 			return _nullable;
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#localColumnSqlCode
+		 */
 		override public function get localColumnSqlCode() : String
 		{
 			var p : ORMPropertyDescriptor;
@@ -60,6 +76,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#localColumnName
+		 */
 		override public function get localColumnName():String
 		{
 			if ( !_localColumnName )
@@ -70,6 +89,9 @@ package com.huafu.sql.orm.relation
 		}
 		
 		
+		/**
+		 * @copy IORMRelation#setupOrmObject()
+		 */
 		public function setupOrmObject( ormObject : ORM, ormObjectData : Object, usingData : Object ) : void
 		{
 			var res : ORM = ormObjectData[ownerPropertyName] || null;
