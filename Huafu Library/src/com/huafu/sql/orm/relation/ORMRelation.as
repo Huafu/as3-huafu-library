@@ -224,7 +224,7 @@ package com.huafu.sql.orm.relation
 		 * @return The name of the class read
 		 * @throws IllegalOperationError If no class name defined in the given argument
 		 */
-		internal static function readOrmClassFromMetadataArg( metadata : ReflectionMetadata, argName : String = "class" ) : String
+		internal static function readOrmClassFromMetadataArg( metadata : ReflectionMetadata, argName : String = "foreignClass" ) : String
 		{
 			var className : String;
 			className = metadata.argValueString(argName);
