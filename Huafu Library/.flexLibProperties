@@ -24,6 +24,11 @@
     <classEntry path="com.huafu.sql.query.SQLiteConditionGroup"/>
     <classEntry path="com.huafu.sql.query.SQLiteCondition"/>
     <classEntry path="com.huafu.sql.query.SQLiteParameters"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelation"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationHasOne"/>
+    <classEntry path="com.huafu.sql.orm.relation.IORMRelation"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationHasMany"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationBridge"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
