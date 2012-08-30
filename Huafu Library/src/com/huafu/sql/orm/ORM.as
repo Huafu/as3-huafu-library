@@ -627,11 +627,18 @@ package com.huafu.sql.orm
 		/**
 		 * Get a query object where the from and the possible soft deleted rows condition are already defined
 		 * 
+		 * @param tableAlias The alias of the table
+		 * @param setDeletedCondition If false, the soft deleted row filter condition will never be set
 		 * @return The prepared query
 		 */
-		public function getPreparedQuery() : SQLiteQuery
+		public function getPreparedQuery( tableAlias : String = null, setDeletedCondition : Boolean = true ) : SQLiteQuery
 		{
-			return getQuery().from(ormDescriptor.tableName).where(getDeletedCondition());
+			var q : SQLiteQuery = getQuery().from(ormDescriptor.tableName + (tableAlias ? " AS " + tableAlias : ""));
+			if ( setDeletedCondition )
+			{
+				q.where(getDeletedCondition());
+			}
+			return q;
 		}
 		
 		
