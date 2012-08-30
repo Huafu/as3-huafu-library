@@ -3,6 +3,8 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionMetadata;
+	import com.huafu.utils.reflection.ReflectionProperty;
 
 	public interface IORMRelation
 	{

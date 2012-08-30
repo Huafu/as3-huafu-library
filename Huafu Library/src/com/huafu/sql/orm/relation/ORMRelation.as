@@ -5,6 +5,10 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORMPropertyDescriptor;
 	import com.huafu.sql.query.SQLiteCondition;
 	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionMetadata;
+	import com.huafu.utils.reflection.ReflectionProperty;
+	
+	import flash.errors.IllegalOperationError;
 
 	public class ORMRelation
 	{
@@ -13,17 +17,16 @@ package com.huafu.sql.orm.relation
 		protected var _localColumnName : String;
 		
 		protected var _foreignColumnName : String;
+		protected var _foreignOrmClassName : String;
 		protected var _foreignOrmClass : Class;
 		protected var _foreignOrmDescriptor : ORMDescriptor;
 		protected var _foreignRelation : IORMRelation;
 		protected var _foreignIsUnique : Boolean;
 		
-		public function ORMRelation( ownerDescriptor : ORMDescriptor, ownerPropertyName : String, foreignOrmClass : Class, foreignColumnName : String )
+		public function ORMRelation( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			_destinationOrmDescriptor = ownerDescriptor;
-			_destinationOrmPropertyName = ownerPropertyName;
-			_foreignOrmClass = foreignOrmClass;
-			_foreignColumnName = foreignColumnName;
+			_destinationOrmPropertyName = property.name;
 			_foreignIsUnique = false;
 		}
 		
@@ -64,6 +67,10 @@ package com.huafu.sql.orm.relation
 		
 		public function get foreignOrmClass() : Class
 		{
+			if ( !_foreignOrmClass )
+			{
+				_foreignOrmClass = ORMDescriptor.resolveOrmClass(_foreignOrmClassName, ownerDescriptor);
+			}
 			return _foreignOrmClass;
 		}
 		
@@ -106,6 +113,20 @@ package com.huafu.sql.orm.relation
 				foreignTableAlias = foreignDescriptor.tableName;
 			}
 			return foreignTableAlias + "." + foreignColumnName + " = " + localTableAlias + "." + localColumnName;
+		}
+		
+		
+		internal static function readOrmClassFromMetadataArg( metadata : ReflectionMetadata, argName : String = "className" ) : String
+		{
+			var className : String;
+			className = metadata.argValueString("className");
+			if ( !className )
+			{
+				throw new IllegalOperationError("You must define a '" + argName + "' argument on the '" + metadata.name
+					+ "' metadata of the property '" + (metadata.owner as ReflectionProperty).name + "' defined in model '"
+					+ (metadata.owner as ReflectionProperty).owner.className + "'");
+			}
+			return className;
 		}
 	}
 }

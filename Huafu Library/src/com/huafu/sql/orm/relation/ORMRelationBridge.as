@@ -5,24 +5,23 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORMIterator;
 	import com.huafu.sql.query.SQLiteCondition;
 	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionMetadata;
+	import com.huafu.utils.reflection.ReflectionProperty;
 	
-	public class ORMRelationBridge implements IORMRelation
+	public class ORMRelationBridge extends ORMRelation implements IORMRelation
 	{
-		internal var _localToUsing : IORMRelation;
-		internal var _usingToForeign : IORMRelation;
+		protected var _localToUsing : IORMRelation;
+		protected var _usingToForeign : IORMRelation;
 		
-		internal var _localOrmClass : Class;
-		internal var _foreginOrmClass : Class;
-		internal var _usingOrmClass : Class;
-		internal var _usingOrmDescriptor : ORMDescriptor;
-		internal var _ownerPropertyName : String;
+		protected var _usingOrmClass : Class;
+		protected var _usingOrmClassName : String;
+		protected var _usingOrmDescriptor : ORMDescriptor;
 		
-		public function ORMRelationBridge( fromOrmClass : Class, ownerPropertyName : String, toOrmClass : Class, usingOrmClass : Class )
+		public function ORMRelationBridge( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
-			_localOrmClass = fromOrmClass;
-			_foreginOrmClass = toOrmClass;
-			_usingOrmClass = usingOrmClass;
-			_ownerPropertyName = ownerPropertyName;
+			super(ownerDescriptor, property, metadata);
+			_usingOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata, "usingClassName");
+			_foreignOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata);
 		}
 		
 		
@@ -37,6 +36,10 @@ package com.huafu.sql.orm.relation
 		
 		public function get usingOrmClass() : Class
 		{
+			if ( !_usingOrmClass )
+			{
+				_usingOrmClass = ORMDescriptor.resolveOrmClass(_usingOrmClassName, ownerDescriptor);
+			}
 			return _usingOrmClass;
 		}
 		
@@ -58,54 +61,50 @@ package com.huafu.sql.orm.relation
 			return _localToUsing;
 		}
 		
-		public function get foreignColumnName() : String
+		override public function get foreignColumnName() : String
 		{
-			return usingToForeignRelation.foreignColumnName;
+			if ( !_foreignColumnName )
+			{
+				_foreignColumnName = usingToForeignRelation.foreignColumnName;
+			}
+			return _foreignColumnName;
 		}
 		
-		public function get foreignRelation():IORMRelation
+		override public function get foreignRelation() : IORMRelation
 		{
-			return usingToForeignRelation.foreignRelation;
+			if ( !_foreignRelation )
+			{
+				_foreignRelation = usingToForeignRelation.foreignRelation;
+			}
+			return _foreignRelation;
 		}
 		
-		public function get ownerDescriptor():ORMDescriptor
+		override public function get localColumnName() : String
 		{
-			return ORMDescriptor.forClass(_localOrmClass);
+			if ( !_localColumnName )
+			{
+				_localColumnName = ownerToUsingRelation.localColumnName;
+			}
+			return _localColumnName;
 		}
 		
-		public function get ownerPropertyName():String
+		override public function get foreignIsUnique() : Boolean
 		{
-			return _ownerPropertyName;
+			if ( !_foreignIsUnique )
+			{
+				_foreignIsUnique = ownerToUsingRelation.foreignIsUnique && usingToForeignRelation.foreignIsUnique;
+			}
+			return _foreignIsUnique;
 		}
 		
-		public function get localColumnName():String
-		{
-			return ownerToUsingRelation.localColumnName;
-		}
-		
-		public function get foreignDescriptor():ORMDescriptor
-		{
-			return ORMDescriptor.forClass(_foreginOrmClass);
-		}
-		
-		public function get foreignOrmClass():Class
-		{
-			return _foreginOrmClass;
-		}
-		
-		public function get foreignIsUnique():Boolean
-		{
-			return ownerToUsingRelation.foreignIsUnique && usingToForeignRelation.foreignIsUnique;
-		}
-		
-		public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String
+		override public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String
 		{
 			return ownerToUsingRelation.getSqlCondition( localTableAlias, usingTableAlias )
 				+ " AND " + usingToForeignRelation.getSqlCondition( usingTableAlias, foreignTableAlias );
 		}
 		
 		
-		public function setupQueryCondition( query : SQLiteQuery, ormObject : ORM, usingData : Object, localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : void
+		override public function setupQueryCondition( query : SQLiteQuery, ormObject : ORM, usingData : Object, localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : void
 		{
 			ownerToUsingRelation.setupQueryCondition(query, ormObject, usingData, localTableAlias, usingTableAlias);
 			query.where(usingToForeignRelation.getSqlCondition(usingTableAlias, foreignTableAlias));

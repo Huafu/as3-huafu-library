@@ -4,23 +4,41 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.query.SQLiteCondition;
 	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionMetadata;
+	import com.huafu.utils.reflection.ReflectionProperty;
 	
 	public class ORMRelationHasOne extends ORMRelation implements IORMRelation
 	{
-		public var _nullable : Boolean;
+		protected var _nullable : Boolean;
 		
-		public function ORMRelationHasOne(ownerDescriptor:ORMDescriptor, ownerPropertyName:String, localColumnName : String, foreignOrmClass:Class, nullable : Boolean = false)
+		public function ORMRelationHasOne( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
-			super(ownerDescriptor, ownerPropertyName, foreignOrmClass, null);
+			super(ownerDescriptor, property, metadata);
 			_foreignIsUnique = true;
-			_nullable = nullable;
-			_localColumnName = localColumnName;
+			_foreignColumnName = metadata.argValueString("foreignColumn");
+			_nullable = metadata.argValueBoolean("nullable", false);
+			_localColumnName = metadata.argValueString("column");
+			_foreignOrmClass = property.dataTypeClass;
 		}
 		
 		
 		override public function get foreignColumnName() : String
 		{
-			return foreignDescriptor.primaryKeyProperty.columnName;
+			if ( !_foreignColumnName )
+			{
+				_foreignColumnName = foreignDescriptor.primaryKeyProperty.columnName
+			}
+			return _foreignColumnName;
+		}
+		
+		
+		override public function get localColumnName():String
+		{
+			if ( !_localColumnName )
+			{
+				_localColumnName = foreignDescriptor.tableName + "_id";
+			}
+			return _localColumnName;
 		}
 		
 		
