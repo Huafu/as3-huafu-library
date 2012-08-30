@@ -20,8 +20,9 @@ package com.huafu.sql.orm.relation
 		public function ORMRelationBridge( ownerDescriptor : ORMDescriptor, property : ReflectionProperty, metadata : ReflectionMetadata )
 		{
 			super(ownerDescriptor, property, metadata);
-			_usingOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata, "usingClassName");
+			_usingOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata, "usingClass");
 			_foreignOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata);
+			_foreignIsUnique = !(property.dataTypeClass === ORMIterator);
 		}
 		
 		
@@ -88,15 +89,6 @@ package com.huafu.sql.orm.relation
 			return _localColumnName;
 		}
 		
-		override public function get foreignIsUnique() : Boolean
-		{
-			if ( !_foreignIsUnique )
-			{
-				_foreignIsUnique = ownerToUsingRelation.foreignIsUnique && usingToForeignRelation.foreignIsUnique;
-			}
-			return _foreignIsUnique;
-		}
-		
 		override public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String
 		{
 			return ownerToUsingRelation.getSqlCondition( localTableAlias, usingTableAlias )
@@ -115,7 +107,7 @@ package com.huafu.sql.orm.relation
 			var res : ORMIterator,
 				foreignOrm : ORM = foreignDescriptor.globalOrmInstance,
 				usingOrm : ORM = usingDescriptor.globalOrmInstance,
-				q : SQLiteQuery;
+				q : SQLiteQuery, result : Array;
 				
 			foreignOrm.excludeSoftDeleted = usingOrm.excludeSoftDeleted = ormObject.excludeSoftDeleted;
 			q = foreignOrm.getPreparedQuery("f", false)
@@ -123,7 +115,23 @@ package com.huafu.sql.orm.relation
 			// add the using table
 			q.from(usingDescriptor.tableName + " AS u");
 			setupQueryCondition(q, ormObject, usingData, "l", "f", "u");
-			ormObjectData[ownerPropertyName] = new ORMIterator(foreignOrmClass, q.compile(), {});
+			if ( foreignIsUnique )
+			{
+				result = q.get();
+				if ( result.length == 0 )
+				{
+					ormObjectData[ownerPropertyName] = null;
+				}
+				else
+				{
+					ormObjectData[ownerPropertyName] = new foreignOrmClass();
+					(ormObjectData[ownerPropertyName] as ORM).loadDataFromSqlResult(result[0]);
+				}
+			}
+			else
+			{
+				ormObjectData[ownerPropertyName] = new ORMIterator(foreignOrmClass, q.compile(), {});
+			}
 		}
 	}
 }

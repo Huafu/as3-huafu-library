@@ -4,6 +4,8 @@ package com.huafu.sql.orm
 	
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.orm.relation.IORMRelation;
+	import com.huafu.sql.orm.relation.ORMRelationHasOne;
 	import com.huafu.sql.query.SQLiteCondition;
 	import com.huafu.sql.query.SQLiteQuery;
 	
@@ -348,7 +350,7 @@ package com.huafu.sql.orm
 		{
 			var ev : ORMEvent = new ORMEvent(ORMEvent.SAVING), sql : String, res : SQLResult,
 				parts : Array, params : Object = {}, name : String, stmt : SQLiteStatement,
-				prop : ORMPropertyDescriptor, rel : ORMHasOneDescriptor;
+				prop : ORMPropertyDescriptor, rel : ORMRelationHasOne;
 			
 			dispatchEvent(ev);
 			if ( ev.preventDefault() )
@@ -382,9 +384,9 @@ package com.huafu.sql.orm
 					else
 					{
 						// it's a "has one" relation, save the id or null if no ID
-						rel = ormDescriptor.getRelatedTo(name) as ORMHasOneDescriptor;
-						parts.push(rel.columnName + " = :" + name);
-						params[name] = _data[name] ? _data[name][rel.relatedOrmPropertyDescriptor.name] : null;
+						rel = ormDescriptor.getRelatedTo(name) as ORMRelationHasOne;
+						parts.push(rel.localColumnName + " = :" + name);
+						params[name] = _data[name] ? _data[name][rel.foreignColumnProperty.name] : null;
 					}
 				}
 				sql += parts.join(", ") + " WHERE " + primaryKeyColumnName
@@ -431,9 +433,9 @@ package com.huafu.sql.orm
 					else
 					{
 						// it's a "has one" relation, save the id or null if no ID
-						rel = ormDescriptor.getRelatedTo(name) as ORMHasOneDescriptor;
-						parts.push(rel.columnName);
-						params[name] = _data[name] ? _data[name][rel.relatedOrmPropertyDescriptor.name] : null;
+						rel = ormDescriptor.getRelatedTo(name) as ORMRelationHasOne;
+						parts.push(rel.localColumnName);
+						params[name] = _data[name] ? _data[name][rel.foreignColumnProperty.name] : null;
 					}
 				}
 				sql += parts.join(", ") + ") VALUES(:" + _hasChanged.join(", :") + ")";
@@ -654,7 +656,7 @@ package com.huafu.sql.orm
 				throw new IllegalOperationError("You cannot " + event.kind + " a property on an ORM model");
 			}
 			var pName : String = event.property.toString(),
-				rel : IORMRelationDescriptor,
+				rel : IORMRelation,
 				prop : ORMPropertyDescriptor = _descriptor.propertyDescriptor(pName);
 			if ( !prop )
 			{
@@ -676,7 +678,7 @@ package com.huafu.sql.orm
 			{
 				_data[pName] = event.oldValue;
 			}
-			else if ( (!rel || rel is ORMHasOneDescriptor) && _hasChanged.indexOf(pName) == -1 )
+			else if ( (!rel || rel is ORMRelationHasOne) && _hasChanged.indexOf(pName) == -1 )
 			{
 				_hasChanged.push(pName);
 				_isSaved = false;

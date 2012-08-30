@@ -17,7 +17,6 @@
     <classEntry path="com.huafu.sql.orm.ORMHasOneDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMRelationDescriptorBase"/>
     <classEntry path="com.huafu.sql.orm.ORMHasManyDescriptor"/>
-    <classEntry path="com.huafu.sql.orm.IORMRelationDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMBelongsToDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMHasManyUsingDescriptor"/>
     <classEntry path="com.huafu.sql.query.SQLiteQuery"/>

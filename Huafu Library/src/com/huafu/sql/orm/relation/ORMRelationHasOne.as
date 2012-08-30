@@ -2,6 +2,7 @@ package com.huafu.sql.orm.relation
 {
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
+	import com.huafu.sql.orm.ORMPropertyDescriptor;
 	import com.huafu.sql.query.SQLiteCondition;
 	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
@@ -29,6 +30,33 @@ package com.huafu.sql.orm.relation
 				_foreignColumnName = foreignDescriptor.primaryKeyProperty.columnName
 			}
 			return _foreignColumnName;
+		}
+		
+		
+		public function get isNullable() : Boolean
+		{
+			return _nullable;
+		}
+		
+		
+		override public function get localColumnSqlCode() : String
+		{
+			var p : ORMPropertyDescriptor;
+			if ( !_localColumnSqlCode )
+			{
+				if ( (p = ownerDescriptor.propertyDescriptorByColumnName(localColumnName)) )
+				{
+					return p.sqlCode;
+				}
+				p = foreignDescriptor.propertyDescriptorByColumnName(foreignColumnName);
+				_localColumnSqlCode = "\"" + localColumnName + "\" " + p.columnDataType;
+				if ( p.columnDataLength > 0 )
+				{
+					_localColumnSqlCode += "(" + p.columnDataLength + ")";
+				}
+				_localColumnSqlCode += " " + (isNullable ? "" : "NOT ") + "NULL";
+			}
+			return _localColumnSqlCode;
 		}
 		
 		

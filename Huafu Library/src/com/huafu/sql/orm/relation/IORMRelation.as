@@ -2,6 +2,7 @@ package com.huafu.sql.orm.relation
 {
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
+	import com.huafu.sql.orm.ORMPropertyDescriptor;
 	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
@@ -23,6 +24,10 @@ package com.huafu.sql.orm.relation
 		function get foreignOrmClass() : Class;
 		
 		function get foreignIsUnique() : Boolean;
+		
+		function get localColumnSqlCode() : String;
+		
+		function get foreignColumnProperty() : ORMPropertyDescriptor;
 		
 		function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String = null, usingTableAlias : String = null ) : String;
 		

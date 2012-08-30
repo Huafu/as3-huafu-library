@@ -5,6 +5,7 @@ package com.huafu.sql.orm
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.sql.orm.relation.IORMRelation;
+	import com.huafu.sql.orm.relation.ORMRelation;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
@@ -182,7 +183,7 @@ package com.huafu.sql.orm
 			
 			for each ( prop in relatedToProps )
 			{
-				_relatedTo.set(prop.name, ORMRelationDescriptorBase.fromReflectionProperty(this, prop));
+				_relatedTo.set(prop.name, ORMRelation.fromReflectionProperty(this, prop));
 			}
 			
 			// update the DB schema if necessary
@@ -256,9 +257,9 @@ package com.huafu.sql.orm
 		 * @param propertyName The name of the property holding a relaiton
 		 * @return The ORM relation descriptor
 		 */
-		public function getRelatedTo( propertyName : String ) : IORMRelationDescriptor
+		public function getRelatedTo( propertyName : String ) : IORMRelation
 		{
-			return _relatedTo.get(propertyName) as IORMRelationDescriptor;
+			return _relatedTo.get(propertyName) as IORMRelation;
 		}
 		
 		
@@ -322,7 +323,7 @@ package com.huafu.sql.orm
 		 */
 		public function sqlResultRowToOrmObject( result : Object, object : ORM, dataObject : Object ) : void
 		{
-			var prop : ORMPropertyDescriptor, relation : IORMRelationDescriptor;
+			var prop : ORMPropertyDescriptor, relation : IORMRelation;
 			// load normal properties
 			for each ( prop in _propertiesByName )
 			{
@@ -410,7 +411,7 @@ package com.huafu.sql.orm
 		{
 			var cols : Array = new Array(),
 				prop : ORMPropertyDescriptor,
-				rel : IORMRelationDescriptor,
+				rel : IORMRelation,
 				res : String = "CREATE TABLE \"" + tableName + "\"(";
 			if ( !primaryKeyProperty )
 			{
@@ -427,9 +428,9 @@ package com.huafu.sql.orm
 			}
 			for each ( rel in _relatedTo )
 			{
-				if ( !_propertiesByColumnName.exists(rel.columnName) && rel.columnSqlCode )
+				if ( !_propertiesByColumnName.exists(rel.localColumnName) && rel.localColumnSqlCode )
 				{
-					cols.push(rel.columnSqlCode);
+					cols.push(rel.localColumnSqlCode);
 				}
 			}
 			res += cols.join(", ") + ")";
