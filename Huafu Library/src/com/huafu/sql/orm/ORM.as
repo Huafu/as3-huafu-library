@@ -234,9 +234,12 @@ package com.huafu.sql.orm
 			var name : String;
 			// copy the data from the given result row to the last loaded data
 			_lastLoadedData = new Object();
-			for ( name in result )
+			if ( result )
 			{
-				_lastLoadedData[name] = result[name];
+				for ( name in result )
+				{
+					_lastLoadedData[name] = result[name];
+				}
 			}
 			ormDescriptor.sqlResultRowToOrmObject(result, this, _data);
 			_isLoaded = flagAsLoaded;
@@ -394,7 +397,7 @@ package com.huafu.sql.orm
 				params[primaryKeyPropertyName] = primaryKeyValue;
 				
 				// execute the sql
-				stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
+				stmt = connection.createStatement("/* " + PREPEND_SQL_COMMENT + " */ " + sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
 				if ( stmt.getResult().rowsAffected == 1 )
@@ -441,7 +444,7 @@ package com.huafu.sql.orm
 				sql += parts.join(", ") + ") VALUES(:" + _hasChanged.join(", :") + ")";
 				
 				// execute sql
-				stmt = connection.createStatement(PREPEND_SQL_COMMENT + sql, true);
+				stmt = connection.createStatement("/* " + PREPEND_SQL_COMMENT + " */ " + sql, true);
 				stmt.bind(params);
 				stmt.safeExecute();
 				res = stmt.getResult();
@@ -614,7 +617,7 @@ package com.huafu.sql.orm
 			{
 				throw new IllegalOperationError("The record has no PK value, it cannot be deleted");
 			}
-			stmt = connection.createStatement(PREPEND_SQL_COMMENT + "DELETE FROM " + ormDescriptor.tableName + " WHERE "
+			stmt = connection.createStatement("/* " + PREPEND_SQL_COMMENT + " */ DELETE FROM " + ormDescriptor.tableName + " WHERE "
 				+ primaryKeyColumnName + " = :" + primaryKeyPropertyName);
 			stmt.bind(primaryKeyPropertyName, primaryKeyValue);
 			res = stmt.safeExecute() && (stmt.getResult().rowsAffected == 1);
@@ -696,7 +699,7 @@ package com.huafu.sql.orm
 			_isSaved = false;
 			_lastLoadedData = null;
 			_hasChanged = new Array();
-			loadDataFromSqlResult({}, false);
+			loadDataFromSqlResult(null, false);
 		}
 		
 		

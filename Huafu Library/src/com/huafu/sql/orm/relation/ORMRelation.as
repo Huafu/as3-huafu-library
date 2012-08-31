@@ -143,7 +143,7 @@ package com.huafu.sql.orm.relation
 		{
 			if ( !_foreignOrmDescriptor )
 			{
-				_foreignOrmDescriptor = ORMDescriptor.forClass(_foreignOrmClass);
+				_foreignOrmDescriptor = ORMDescriptor.forClass(foreignOrmClass);
 			}
 			return _foreignOrmDescriptor;
 		}

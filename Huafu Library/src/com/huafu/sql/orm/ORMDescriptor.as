@@ -327,7 +327,7 @@ package com.huafu.sql.orm
 			// load normal properties
 			for each ( prop in _propertiesByName )
 			{
-				if ( result.hasOwnProperty(prop.columnName) )
+				if ( result && result.hasOwnProperty(prop.columnName) )
 				{
 					dataObject[prop.name] = result[prop.columnName];
 				}
