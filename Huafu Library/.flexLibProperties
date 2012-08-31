@@ -28,6 +28,7 @@
     <classEntry path="com.huafu.sql.orm.relation.IORMRelation"/>
     <classEntry path="com.huafu.sql.orm.relation.ORMRelationHasMany"/>
     <classEntry path="com.huafu.sql.orm.relation.ORMRelationBridge"/>
+    <classEntry path="com.huafu.common.Huafu"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

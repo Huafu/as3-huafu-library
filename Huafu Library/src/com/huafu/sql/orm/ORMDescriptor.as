@@ -2,6 +2,7 @@ package com.huafu.sql.orm
 {
 	import avmplus.getQualifiedClassName;
 	
+	import com.huafu.common.Huafu;
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.sql.orm.relation.IORMRelation;
@@ -20,6 +21,7 @@ package com.huafu.sql.orm
 	import flash.utils.getTimer;
 	
 	import mx.collections.ArrayList;
+	import mx.logging.ILogger;
 
 	/**
 	 * Class used to describe a model
@@ -186,9 +188,25 @@ package com.huafu.sql.orm
 				_relatedTo.set(prop.name, ORMRelation.fromReflectionProperty(this, prop));
 			}
 			
+			logger.debug("Created a new ORM descriptor for table '" + tableName + "' represented by ORM class '" + ormClassQName + "'");
+			
 			// update the DB schema if necessary
 			updateDatabase();
 		}
+		
+		
+		/**
+		 * The logger for this class
+		 */		
+		private function get logger() : ILogger
+		{
+			if ( !_logger )
+			{
+				_logger = Huafu.getLoggerFor(ORMDescriptor);
+			}
+			return _logger;
+		}
+		private var _logger : ILogger;
 		
 		
 		/**

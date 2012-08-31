@@ -1,10 +1,16 @@
 package com.huafu.sql
 {
+	import com.huafu.common.Huafu;
+	
 	import flash.data.SQLStatement;
 	import flash.errors.IllegalOperationError;
 	import flash.errors.SQLError;
 	import flash.events.SQLErrorEvent;
 	import flash.net.Responder;
+	
+	import mx.logging.ILogger;
+	import mx.logging.Log;
+	import mx.logging.LogLogger;
 	
 	
 	/**
@@ -59,8 +65,23 @@ package com.huafu.sql
 		{
 			_lastError = null;
 			(sqlConnection as SQLiteConnection).autoOpen();
+			logger.debug("Executing a SQL query", text);
 			super.execute(prefetch, responder);
 		}
+		
+		
+		/**
+		 * The logger for this class
+		 */		
+		private function get logger() : ILogger
+		{
+			if ( !_logger )
+			{
+				_logger = Huafu.getLoggerFor(SQLiteStatement);
+			}
+			return _logger;
+		}
+		private var _logger : ILogger;
 		
 		
 		/**

@@ -1,5 +1,6 @@
 package com.huafu.sql
 {
+	import com.huafu.common.Huafu;
 	import com.huafu.utils.HashMap;
 	
 	import flash.data.SQLColumnSchema;
@@ -11,6 +12,11 @@ package com.huafu.sql
 	import flash.filesystem.File;
 	import flash.net.Responder;
 	import flash.utils.Dictionary;
+	
+	import mx.logging.ILogger;
+	import mx.logging.Log;
+	
+	import org.osmf.logging.LoggerFactory;
 	
 	
 	/**
@@ -69,6 +75,7 @@ package com.huafu.sql
 			{
 				throw new IllegalOperationError("You must create/load a connection using the 'instance' method");
 			}
+			_creatingConnection = false;
 			_stmtCache = new HashMap();
 			_name = name;
 		}
@@ -92,9 +99,24 @@ package com.huafu.sql
 			if ( !connected )
 			{
 				file = File.applicationStorageDirectory.resolvePath(_name + ".sqlite");
+				logger.debug("Auto openning database connection", _name);
 				open(file);
 			}
 		}
+		
+		
+		/**
+		 * The logger for this class
+		 */		
+		private function get logger() : ILogger
+		{
+			if ( !_logger )
+			{
+				_logger = Huafu.getLoggerFor(SQLiteConnection);
+			}
+			return _logger;
+		}
+		private var _logger : ILogger;
 		
 		
 		/**
