@@ -119,7 +119,7 @@ package com.huafu.sql
 		{
 			_lastError = null;
 			(sqlConnection as SQLiteConnection).autoOpen();
-			logger.debug("Executing a SQL query", text);
+			logger.debug("Executing a SQL query: " + text);
 			super.execute(prefetch, responder);
 		}
 

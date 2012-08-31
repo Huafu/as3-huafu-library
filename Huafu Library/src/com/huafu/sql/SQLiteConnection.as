@@ -141,7 +141,7 @@ package com.huafu.sql
 			if (!connected)
 			{
 				file = File.applicationStorageDirectory.resolvePath(_name + ".sqlite");
-				logger.debug("Auto openning database connection", _name);
+				logger.debug("Auto openning database connection: " + _name);
 				open(file);
 			}
 		}
