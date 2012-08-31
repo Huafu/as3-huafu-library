@@ -25,107 +25,79 @@
 /*============================================================================*/
 
 
-package com.huafu.utils.reflection
+package com.huafu.sql.orm.relation
 {
-	import flash.utils.getDefinitionByName;
+	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.orm.ORM;
+	import com.huafu.sql.orm.ORMDescriptor;
+	import com.huafu.sql.orm.ORMIterator;
+	import com.huafu.sql.query.SQLiteCondition;
+	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionMetadata;
+	import com.huafu.utils.reflection.ReflectionProperty;
+	import flash.errors.IllegalOperationError;
 
 
 	/**
-	 * Reflects a class' property
+	 * Handle ORM relation "one to many"
 	 */
-	public class ReflectionProperty extends ReflectionBase
+	public class ORMRelationHasMany extends ORMRelation implements IORMRelation
 	{
 		/**
-		 * Type of property : accessor
+		 * @copy ORMRelation#ORMRelation()
 		 */
-		public static const TYPE_ACCESSOR : String = "accessor";
-		/**
-		 * Type of property : variable
-		 */
-		public static const TYPE_VARIABLE : String = "variable";
-
-
-		/**
-		 * Creates a reflection of a preoperty
-		 *
-		 * @param owner The relfection class owning the property
-		 * @param xmlNode The XML node describing the proeprty
-		 */
-		public function ReflectionProperty( owner : ReflectionClass, xmlNode : XML )
+		public function ORMRelationHasMany( ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
+											metadata : ReflectionMetadata )
 		{
-			super(xmlNode);
-			_name = xmlNode.@name.toString();
-			_type = xmlNode.localName();
-			_dataType = xmlNode.@type.toString();
-			_owner = owner;
-		}
-
-		/**
-		 * The data type QName of the property
-		 */
-		private var _dataType : String;
-		/**
-		 * The name of the property
-		 */
-		private var _name : String;
-
-
-		/**
-		 * The class owning the property
-		 */
-		private var _owner : ReflectionClass;
-		/**
-		 * The type of the property (accessor or variable)
-		 * @see #TYPE_ACCESSOR
-		 * @see #TYPE_VARIABLE
-		 */
-		private var _type : String;
-
-
-		/**
-		 * The data type of the property
-		 */
-		public function get dataType() : String
-		{
-			return _dataType;
+			super(ownerDescriptor, property, metadata);
+			_foreignColumnName = metadata.argValueString("foreignColumn");
+			_foreignOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata);
+			_localColumnName = metadata.argValueString("column");
 		}
 
 
 		/**
-		 * Pointer to the class of the data type
+		 * @copy IORMRelation#foreignColumnName
 		 */
-		public function get dataTypeClass() : Class
+		public override function get foreignColumnName() : String
 		{
-			return getDefinitionByName(_dataType) as Class;
+			if (!_foreignColumnName)
+			{
+				_foreignColumnName = ownerDescriptor.tableName + "_id";
+			}
+			return _foreignColumnName;
 		}
 
 
 		/**
-		 * The name of this property
+		 * @copy IORMRelation#localColumnName
 		 */
-		public function get name() : String
+		public override function get localColumnName() : String
 		{
-			return _name;
+			if (!_localColumnName)
+			{
+				_localColumnName = ownerDescriptor.primaryKeyProperty.columnName;
+			}
+			return _localColumnName;
 		}
 
 
 		/**
-		 * The owner reflection class of this property
+		 * @copy IORMRelation#setupOrmObject()
 		 */
-		public function get owner() : ReflectionClass
+		public function setupOrmObject( ormObject : ORM, ormObjectData : Object, usingData : Object ) : void
 		{
-			return _owner;
-		}
-
-
-		/**
-		 * The proeprty type of this proeprty
-		 * @see #TYPE_ACCESSOR
-		 * @see #TYPE_VARIABLE
-		 */
-		public function get propertyType() : String
-		{
-			return _type;
+			var res : ORMIterator, foreignOrm : ORM, q : SQLiteQuery;
+			if (!usingData || !usingData[localColumnName])
+			{
+				ormObjectData[ownerPropertyName] = null;
+				return;
+			}
+			foreignOrm = foreignDescriptor.globalOrmInstance;
+			foreignOrm.excludeSoftDeleted = ormObject.excludeSoftDeleted;
+			q = foreignOrm.getPreparedQuery();
+			q.where(new SQLiteCondition(foreignColumnName + " = ?", usingData[localColumnName]));
+			ormObjectData[ownerPropertyName] = new ORMIterator(foreignOrmClass, q.compile(), {});
 		}
 	}
 }

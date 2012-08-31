@@ -25,107 +25,71 @@
 /*============================================================================*/
 
 
-package com.huafu.utils.reflection
+package com.huafu.common
 {
-	import flash.utils.getDefinitionByName;
+	import com.huafu.utils.HashMap;
+	import flash.errors.IllegalOperationError;
+	import mx.logging.ILogger;
+	import mx.logging.Log;
+	import mx.logging.LogEventLevel;
+	import mx.logging.targets.TraceTarget;
+	import avmplus.getQualifiedClassName;
 
 
 	/**
-	 * Reflects a class' property
+	 * Global class handling common operations
 	 */
-	public class ReflectionProperty extends ReflectionBase
+	public final class Huafu
 	{
-		/**
-		 * Type of property : accessor
-		 */
-		public static const TYPE_ACCESSOR : String = "accessor";
-		/**
-		 * Type of property : variable
-		 */
-		public static const TYPE_VARIABLE : String = "variable";
+		protected static var _consoleLogTarget : TraceTarget = null;
+		protected static var _loggingToConsole : Boolean     = false;
 
 
 		/**
-		 * Creates a reflection of a preoperty
+		 * Get the logger for a given class
 		 *
-		 * @param owner The relfection class owning the property
-		 * @param xmlNode The XML node describing the proeprty
+		 * @param theClass The class to get the logger of
 		 */
-		public function ReflectionProperty( owner : ReflectionClass, xmlNode : XML )
+		public static function getLoggerFor( theClass : Class ) : ILogger
 		{
-			super(xmlNode);
-			_name = xmlNode.@name.toString();
-			_type = xmlNode.localName();
-			_dataType = xmlNode.@type.toString();
-			_owner = owner;
+			var name : String = getQualifiedClassName(theClass).replace("::", ".");
+			return Log.getLogger(name);
 		}
 
-		/**
-		 * The data type QName of the property
-		 */
-		private var _dataType : String;
-		/**
-		 * The name of the property
-		 */
-		private var _name : String;
 
-
-		/**
-		 * The class owning the property
-		 */
-		private var _owner : ReflectionClass;
-		/**
-		 * The type of the property (accessor or variable)
-		 * @see #TYPE_ACCESSOR
-		 * @see #TYPE_VARIABLE
-		 */
-		private var _type : String;
-
-
-		/**
-		 * The data type of the property
-		 */
-		public function get dataType() : String
+		public static function get traceEnabled() : Boolean
 		{
-			return _dataType;
+			return _loggingToConsole;
 		}
 
 
 		/**
-		 * Pointer to the class of the data type
+		 * Whether the trace is enabled or not
 		 */
-		public function get dataTypeClass() : Class
+		public static function set traceEnabled( value : Boolean ) : void
 		{
-			return getDefinitionByName(_dataType) as Class;
+			if (value == _loggingToConsole)
+			{
+				return;
+			}
+			if (!_consoleLogTarget)
+			{
+				_consoleLogTarget = new TraceTarget();
+				_consoleLogTarget.filters = [ "mx.rpc.*", "mx.messaging.*", "com.huafu.*" ];
+				_consoleLogTarget.level = LogEventLevel.ALL;
+				_consoleLogTarget.includeCategory = true;
+				_consoleLogTarget.includeDate = true;
+				_consoleLogTarget.includeLevel = true;
+				_consoleLogTarget.includeTime = true;
+			}
+			Log[value ? "addTarget" : "removeTarget"](_consoleLogTarget);
+			_loggingToConsole = value;
 		}
 
 
-		/**
-		 * The name of this property
-		 */
-		public function get name() : String
+		public function Huafu()
 		{
-			return _name;
-		}
-
-
-		/**
-		 * The owner reflection class of this property
-		 */
-		public function get owner() : ReflectionClass
-		{
-			return _owner;
-		}
-
-
-		/**
-		 * The proeprty type of this proeprty
-		 * @see #TYPE_ACCESSOR
-		 * @see #TYPE_VARIABLE
-		 */
-		public function get propertyType() : String
-		{
-			return _type;
+			throw new IllegalOperationError("Huafu is an abstract class");
 		}
 	}
 }
