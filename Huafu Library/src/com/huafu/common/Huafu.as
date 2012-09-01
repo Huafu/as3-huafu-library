@@ -27,7 +27,6 @@
 
 package com.huafu.common
 {
-	import com.huafu.utils.HashMap;
 	import flash.errors.IllegalOperationError;
 	import mx.logging.ILogger;
 	import mx.logging.Log;
