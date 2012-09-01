@@ -28,7 +28,9 @@
 package com.huafu.sql.query
 {
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.utils.RegExpUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
+	
 	import flash.data.SQLStatement;
 	import flash.errors.IllegalOperationError;
 	import flash.utils.Proxy;
@@ -135,6 +137,75 @@ package com.huafu.sql.query
 			{
 				statement.parameters[i] = zeroBasedParams[i];
 			}
+		}
+
+
+		/**
+		 * Bind all parameters to a SQL statement but not using the parameters native object.
+		 * It'll first run a query to get all values as string, then replace the variables in the original query
+		 * CAUTION this is usefull for CREATE statements for example which doesn't accept binds
+		 * but yur original query will be overwritten
+		 *
+		 * @param statement The statement on which to bin all parameters
+		 */
+		public function softBindTo( statement : SQLiteStatement ) : void
+		{
+			var name : String, i : int, castSql : String, oldSql : String, cols : Array = new Array(),
+				v : int = 0, data : Object, val : String, quotes : RegExp = /\'/g;
+			if (statement.isCached)
+			{
+				throw new IllegalOperationError("You cannot bind softly a cached statement");
+			}
+			oldSql = statement.text;
+			castSql = "SELECT ";
+			for (i = 0; i < zeroBasedParams.length; i++)
+			{
+				statement.parameters[i] = zeroBasedParams[i];
+				cols.push("CAST(? AS TEXT) AS v" + (v++));
+			}
+			for (name in namedParams)
+			{
+				statement.parameters[name] = namedParams[name];
+				cols.push("CAST(" + name + " AS TEXT) AS v" + (v++));
+			}
+			if ( v == 0 )
+			{
+				return;
+			}
+			castSql += cols.join(", ");
+			statement.text = castSql;
+			statement.safeExecute();
+			data = statement.getResult().data[0];
+			v = 0;
+			i = 0;
+			oldSql = oldSql.replace(/\?/g, function( text : String, ... dummy : Array ) : String
+			{
+				val = data["v" + (v++)];
+				if (val === null)
+				{
+					val = "NULL";
+				}
+				else
+				{
+					val = "'" + val.replace(quotes, "''") + "'";
+				}
+				return val;
+			});
+			for (name in namedParams)
+			{
+				val = data["v" + (v++)];
+				if (val === null)
+				{
+					val = "NULL";
+				}
+				else
+				{
+					val = "'" + val.replace(quotes, "''") + "'";
+				}
+				oldSql = oldSql.replace(new RegExp(RegExpUtil.escape(name), "g"), val);
+			}
+			statement.clearParameters();
+			statement.text = oldSql;
 		}
 	}
 }
