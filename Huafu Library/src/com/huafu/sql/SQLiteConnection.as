@@ -37,10 +37,7 @@ package com.huafu.sql
 	import flash.errors.SQLError;
 	import flash.filesystem.File;
 	import flash.net.Responder;
-	import flash.utils.Dictionary;
 	import mx.logging.ILogger;
-	import mx.logging.Log;
-	import org.osmf.logging.LoggerFactory;
 
 
 	/**
