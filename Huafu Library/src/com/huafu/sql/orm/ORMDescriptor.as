@@ -1,23 +1,49 @@
+/*============================================================================*/
+/*                                                                            */
+/*    Huafu Gandon, hereby disclaims all copyright interest in the            */
+/*    library “Huafu Library” (which makes passes at compilers)               */
+/*    written by Huafu Gandon.                                                */
+/*                                                                            */
+/*    Huafu Gandon <huafu.gandon@gmail.com>, 15 August 2012                   */
+/*                                                                            */
+/*                                                                            */
+/*    This file is part of Huafu Library.                                     */
+/*                                                                            */
+/*    Huafu Library is free software: you can redistribute it and/or modify   */
+/*    it under the terms of the GNU General Public License as published by    */
+/*    the Free Software Foundation, either version 3 of the License, or       */
+/*    (at your option) any later version.                                     */
+/*                                                                            */
+/*    Huafu Library is distributed in the hope that it will be useful,        */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/*    GNU General Public License for more details.                            */
+/*                                                                            */
+/*    You should have received a copy of the GNU General Public License       */
+/*    along with Huafu Library.  If not, see <http://www.gnu.org/licenses/>.  */
+/*                                                                            */
+/*============================================================================*/
+
+
 package com.huafu.sql.orm
 {
-	import avmplus.getQualifiedClassName;
-	
+	import com.huafu.common.Huafu;
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.orm.relation.IORMRelation;
+	import com.huafu.sql.orm.relation.ORMRelation;
+	import com.huafu.sql.query.SQLiteParameters;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
-	
-	import flash.data.SQLResult;
 	import flash.data.SQLTableSchema;
 	import flash.errors.IllegalOperationError;
-	import flash.errors.SQLError;
 	import flash.utils.getDefinitionByName;
-	import flash.utils.getTimer;
-	
-	import mx.collections.ArrayList;
+	import mx.logging.ILogger;
+	import avmplus.getQualifiedClassName;
+
 
 	/**
 	 * Class used to describe a model
@@ -28,12 +54,212 @@ package com.huafu.sql.orm
 		 * The qname of the package where reside all your models
 		 */
 		public static var ormModelsPackageFullName : String = "models";
-		
+
 		/**
 		 * Stores all ORM descriptor indexed by their class qname
 		 */
-		private static var _allByClassQName : HashMap = new HashMap();
-		
+		private static var _allByClassQName : HashMap       = new HashMap();
+
+
+		/**
+		 * An array containing all known ORM descriptors
+		 */
+		public static function get allKnownOrmDescriptors() : Array
+		{
+			return _allByClassQName.toArray();
+		}
+
+
+		/**
+		 * An array of all ORM class qnames already known
+		 */
+		public static function get allModelClassQNamesKnown() : Array
+		{
+			return _allByClassQName.keys();
+		}
+
+
+		/**
+		 * Get a ORM descriptor describing the given ORM class, creating it if necessary
+		 *
+		 * @param ormClass The ORM class we want the descriptor of
+		 * @return The desired ORM descriptor
+		 */
+		public static function forClass( ormClass : Class ) : ORMDescriptor
+		{
+			var classQName : String = getQualifiedClassName(ormClass), desc : ORMDescriptor = _allByClassQName.
+				get(classQName);
+			if (!desc)
+			{
+				desc = new ORMDescriptor(ormClass);
+			}
+			return desc;
+		}
+
+
+		/**
+		 * Get the appropriate descriptor for a given ORM object, creating it if necessary
+		 *
+		 * @param ormObject The ORM object we want the descriptor of
+		 * @return The desired descriptor
+		 */
+		public static function forObject( ormObject : ORM ) : ORMDescriptor
+		{
+			var descriptor : ORMDescriptor = _allByClassQName.get(ormObject.classQName);
+			if (!descriptor)
+			{
+				descriptor = new ORMDescriptor(ormObject.ormClass);
+			}
+			return descriptor;
+		}
+
+
+		/**
+		 * Resolve a model name to the class object corresponding
+		 *
+		 * @param className The name of the model's class
+		 * @param fromOrm The ORM descriptor from which trying to resolve from
+		 * @return The pointer to the ORM class
+		 */
+		public static function resolveOrmClass( className : String, fromOrm : ORMDescriptor ) : Class
+		{
+			var fullCN : String = ORMDescriptor.ormModelsPackageFullName + "::" + className, ormClass : Class;
+			try
+			{
+				ormClass = getDefinitionByName(fullCN) as Class;
+			}
+			catch ( err : ReferenceError )
+			{
+				if (err.errorID == 1065)
+				{
+					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '"
+						+ className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.ormClass)
+						+ "', it should solve the problem.";
+				}
+				throw err;
+			}
+			return ormClass;
+		}
+
+
+		/**
+		 * Constructor
+		 *
+		 * @param ormClass A pointer to the ORM class that this object will describe
+		 */
+		public function ORMDescriptor( ormClass : Class )
+		{
+			var reflection : ReflectionClass = ReflectionClass.forClass(ormClass), meta : ReflectionMetadata,
+				prop : ReflectionProperty, ormProp : ORMPropertyDescriptor, pk : String = "id", upd : String
+				= "updatedAt", cre : String = "createdAt", del : String = "deletedAt", relatedToProps : Array
+				= new Array();
+
+			// basic stuff
+			_ormClassQName = getQualifiedClassName(ormClass);
+			_ormClass = ormClass;
+			_relatedTo = new HashMap();
+
+			// testing if the descriptor is already in the register
+			if (_allByClassQName.exists(ormClassQName))
+			{
+				throw new IllegalOperationError("You have to call ORMDescription.forClass() method and not directly the constructor of ORMDescriptor");
+			}
+
+			// table and database
+			meta = reflection.uniqueMetadata("Table");
+			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.
+																									 className);
+			_databaseName = meta.argValue("database") ? meta.argValueString("database") : ORM.defaultDatabaseName;
+			_connectionName = meta.argValueString("connection", null);
+
+			// special columns
+			pk = meta.argValueString("primaryKey", pk);
+			upd = meta.argValueString("updatedDate", upd);
+			cre = meta.argValueString("createdDate", cre);
+			del = meta.argValueString("deletedDate", del);
+
+			// properties
+			_propertiesByName = new HashMap();
+			_propertiesByColumnName = new HashMap();
+			for each (prop in reflection.properties(true, false))
+			{
+				if (prop.hasMetadata("HasOne") || prop.hasMetadata("HasMany") || prop.hasMetadata("BelongsTo"))
+				{
+					// handle relations
+					relatedToProps.push(prop);
+					continue;
+				}
+				else if (!prop.hasMetadata("Column"))
+				{
+					continue;
+				}
+
+				ormProp = ORMPropertyDescriptor.fromReflectionProperty(this, prop);
+				_propertiesByColumnName.set(ormProp.columnName, ormProp);
+				_propertiesByName.set(ormProp.name, ormProp);
+				if (pk == ormProp.name)
+				{
+					ormProp.isReadOnly = true;
+					_primaryKeyProperty = ormProp;
+				}
+				else if (cre == ormProp.name)
+				{
+					ormProp.isReadOnly = true;
+					_createdAtProperty = ormProp;
+				}
+				else if (upd == ormProp.name)
+				{
+					ormProp.isReadOnly = true;
+					_updatedAtProperty = ormProp;
+				}
+				else if (del == ormProp.name)
+				{
+					ormProp.isReadOnly = true;
+					_deletedAtProperty = ormProp;
+				}
+			}
+
+			// before setting up the related objects, we need to register this class
+			_allByClassQName.set(ormClassQName, this);
+
+			for each (prop in relatedToProps)
+			{
+				_relatedTo.set(prop.name, ORMRelation.fromReflectionProperty(this, prop));
+			}
+
+			logger.debug("Created a new ORM descriptor for table '" + tableName + "' represented by ORM class '"
+						 + ormClassQName + "'");
+
+			// update the DB schema if necessary
+			updateSchema();
+		}
+
+		/**
+		 * The SQL connection used for the related table
+		 */
+		private var _connection : SQLiteConnection;
+		/**
+		 * The name of the SQL connection used for the related table
+		 */
+		private var _connectionName : String;
+		/**
+		 * A pointer to the createdAt property of the ORM if any
+		 */
+		private var _createdAtProperty : ORMPropertyDescriptor;
+		/**
+		 * The name of the database where the table is
+		 */
+		private var _databaseName : String;
+		/**
+		 * A pointer to the deletedAt property of the ORM if any
+		 */
+		private var _deletedAtProperty : ORMPropertyDescriptor;
+		/**
+		 * A global instance needed for relations and other stuffs
+		 */
+		private var _globalOrmInstance : ORM;
+		private var _logger : ILogger;
+
 		// basic stuff
 		/**
 		 * Pointer to the ORM class that describes this object
@@ -43,254 +269,53 @@ package com.huafu.sql.orm
 		 * The qname of the ORM class taht describes this object
 		 */
 		private var _ormClassQName : String;
-		/**
-		 * The name of the table in the database
-		 */
-		private var _tableName : String;
-		/**
-		 * The name of the database where the table is
-		 */
-		private var _databaseName : String;
-		/**
-		 * The SQL connection used for the related table
-		 */
-		private var _connection : SQLiteConnection;
-		/**
-		 * The name of the SQL connection used for the related table
-		 */
-		private var _connectionName : String;
-				
-		// properties indexed
-		/**
-		 * All properties of the ORM indexed by their name
-		 */
-		private var _propertiesByName : HashMap;
-		/**
-		 * All properties of the ORM indexed by their column name
-		 */
-		private var _propertiesByColumnName : HashMap;
-		
+
 		// special columns
 		/**
 		 * A pointer to the primary key property
 		 */
 		private var _primaryKeyProperty : ORMPropertyDescriptor;
 		/**
-		 * A pointer to the createdAt property of the ORM if any
+		 * All properties of the ORM indexed by their column name
 		 */
-		private var _createdAtProperty : ORMPropertyDescriptor;
+		private var _propertiesByColumnName : HashMap;
+
+		// properties indexed
 		/**
-		 * A pointer to the updatedAt property of the ORM if any
+		 * All properties of the ORM indexed by their name
 		 */
-		private var _updatedAtProperty : ORMPropertyDescriptor;
-		/**
-		 * A pointer to the deletedAt property of the ORM if any
-		 */
-		private var _deletedAtProperty : ORMPropertyDescriptor;
-		/**
-		 * A global instance needed for relations and other stuffs
-		 */
-		private var _globalOrmInstance : ORM;
-		
+		private var _propertiesByName : HashMap;
+
 		// relations
 		/**
 		 * Stores all relations (has one, has many, belongs to) indexed by property names
 		 */
 		private var _relatedTo : HashMap;
-		
-		
 		/**
-		 * Constructor
-		 * 
-		 * @param ormClass A pointer to the ORM class that this object will describe
+		 * The name of the table in the database
 		 */
-		public function ORMDescriptor( ormClass : Class )
-		{
-			var reflection : ReflectionClass = ReflectionClass.forClass(ormClass),
-				meta : ReflectionMetadata, prop : ReflectionProperty,
-				ormProp : ORMPropertyDescriptor,
-				pk : String = "id", upd : String = "updatedAt", cre : String = "createdAt",
-				del : String = "deletedAt", relatedToProps : Array = new Array();
-			
-			// basic stuff
-			_ormClassQName = getQualifiedClassName(ormClass);
-			_ormClass = ormClass;
-			_relatedTo = new HashMap();
-			
-			// testing if the descriptor is already in the register
-			if ( _allByClassQName.exists(ormClassQName) )
-			{
-				throw new IllegalOperationError("You have to call ORMDescription.forClass() method and not directly the constructor of ORMDescriptor");
-			}
-			
-			// table and database
-			meta = reflection.uniqueMetadata("Table");
-			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.className);
-			_databaseName = meta.argValue("database") ? meta.argValueString("database") : ORM.defaultDatabaseName;
-			_connectionName = meta.argValueString("connection", null);
-			
-			// special columns
-			pk = meta.argValueString("primaryKey", pk);
-			upd = meta.argValueString("updatedDate", upd);
-			cre = meta.argValueString("createdDate", cre);
-			del = meta.argValueString("deletedDate", del);
-			
-			// properties
-			_propertiesByName = new HashMap();
-			_propertiesByColumnName = new HashMap();
-			for each ( prop in reflection.properties(true, false) )
-			{
-				if ( prop.hasMetadata("HasOne") || prop.hasMetadata("HasMany") || prop.hasMetadata("BelongsTo") )
-				{
-					// handle relations
-					relatedToProps.push(prop);
-					continue;
-				}
-				else if ( !prop.hasMetadata("Column") )
-				{
-					continue;
-				}
-				
-				ormProp = ORMPropertyDescriptor.fromReflectionProperty(this, prop);
-				_propertiesByColumnName.set(ormProp.columnName, ormProp);
-				_propertiesByName.set(ormProp.name, ormProp);
-				if ( pk == ormProp.name )
-				{
-					ormProp.isReadOnly = true;
-					_primaryKeyProperty = ormProp;
-				}
-				else if ( cre == ormProp.name )
-				{
-					ormProp.isReadOnly = true;
-					_createdAtProperty = ormProp;
-				}
-				else if ( upd == ormProp.name )
-				{
-					ormProp.isReadOnly = true;
-					_updatedAtProperty = ormProp;
-				}
-				else if ( del == ormProp.name )
-				{
-					ormProp.isReadOnly = true;
-					_deletedAtProperty = ormProp;
-				}
-			}
-			
-			// before setting up the related objects, we need to register this class
-			_allByClassQName.set(ormClassQName, this);
-			
-			for each ( prop in relatedToProps )
-			{
-				_relatedTo.set(prop.name, ORMRelationDescriptorBase.fromReflectionProperty(this, prop));
-			}
-			
-			// update the DB schema if necessary
-			updateDatabase();
-		}
-		
-		
+		private var _tableName : String;
 		/**
-		 * A global instance needed for relations and other stuffs
+		 * A pointer to the updatedAt property of the ORM if any
 		 */
-		public function get globalOrmInstance() : ORM
-		{
-			if ( !_globalOrmInstance )
-			{
-				_globalOrmInstance = factory();
-			}
-			return _globalOrmInstance;
-		}
-		
-		
-		/**
-		 * Creates a new ORM instance of the model described by this descriptor
-		 * 
-		 * @param id The id to auto load if needed
-		 * @return The new ORM instance
-		 */
-		public function factory( id : int = 0 ) : ORM
-		{
-			return ORM.factory(ormClass, id);
-		}
-		
-		
+		private var _updatedAtProperty : ORMPropertyDescriptor;
+
+
 		/**
 		 * Get the connection object used to manipulate the table in the db
-		 * 
+		 *
 		 * @return The connection object
 		 */
 		public function get connection() : SQLiteConnection
 		{
-			if ( !_connection )
+			if (!_connection)
 			{
 				_connection = SQLiteConnection.instance(_connectionName);
 			}
 			return _connection;
 		}
-		
-		
-		/**
-		 * Update the database to reflect the descriptor if necessary
-		 */
-		public function updateDatabase() : void
-		{
-			var stmt : SQLiteStatement, schema : SQLTableSchema;
-			if ( (schema = connection.getTableSchema(tableName)) )
-			{
-				// the table exists, check if the schema is the same
-				//TODO: check the table's columns and alter if needed
-			}
-			else
-			{
-				// the table doesn't exist, let's create it
-				stmt = connection.createStatement(sqlCreationCode, true);
-				stmt.safeExecute();
-			}
-		}
-		
-		
-		/**
-		 * Get the ORM relation descriptor that the given property name is holding
-		 * 
-		 * @param propertyName The name of the property holding a relaiton
-		 * @return The ORM relation descriptor
-		 */
-		public function getRelatedTo( propertyName : String ) : IORMRelationDescriptor
-		{
-			return _relatedTo.get(propertyName) as IORMRelationDescriptor;
-		}
-		
-		
-		/**
-		 * Get the relation object that correspond to the link with a given ORM
-		 *
-		 * @param toWhat The ORM descriptor we want the relation object of
-		 * @param relationClass If specified, it'll look for a relation having strictly the given class
-		 * @return Returns the desired relation or null if no such defined
-		 */
-		public function getRelationTo( toWhat : ORMDescriptor, relationClass : Class = null ) : IORMRelationDescriptor
-		{
-			var rel : IORMRelationDescriptor;
-			for each ( rel in _relatedTo )
-			{
-				if ( rel.relatedOrmDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel, relationClass)) )
-				{
-					return rel;
-				}
-			}
-			return null;
-		}
-		
-		
-		/**
-		 * The updatedAt property if any
-		 */
-		public function get updatedAtProperty() : ORMPropertyDescriptor
-		{
-			return _updatedAtProperty;
-		}
-		
-		
+
+
 		/**
 		 * The createdAt property if any
 		 */
@@ -298,8 +323,8 @@ package com.huafu.sql.orm
 		{
 			return _createdAtProperty;
 		}
-		
-		
+
+
 		/**
 		 * The deletedAt property if any
 		 */
@@ -307,90 +332,105 @@ package com.huafu.sql.orm
 		{
 			return _deletedAtProperty;
 		}
-		
-		
+
+
 		/**
-		 * Load the data from a sql result to an ORM object that this object describe and also
-		 * prepare/load any property corresponding to a realtion
-		 * 
-		 * @param result The row as an object to load in the ORM object
-		 * @param object The ORM object to load results in
-		 * @param dataObject The data object of the ORM object
+		 * Creates a new ORM instance of the model described by this descriptor
+		 *
+		 * @param id The id to auto load if needed
+		 * @return The new ORM instance
 		 */
-		public function sqlResultRowToOrmObject( result : Object, object : ORM, dataObject : Object ) : void
+		public function factory( id : int = 0 ) : ORM
 		{
-			var prop : ORMPropertyDescriptor, relation : IORMRelationDescriptor;
-			// load normal properties
-			for each ( prop in _propertiesByName )
+			return ORM.factory(ormClass, id);
+		}
+
+
+		/**
+		 * Get the ORM relation descriptor that the given property name is holding
+		 *
+		 * @param propertyName The name of the property holding a relaiton
+		 * @return The ORM relation descriptor
+		 */
+		public function getRelatedTo( propertyName : String ) : IORMRelation
+		{
+			return _relatedTo.get(propertyName) as IORMRelation;
+		}
+
+
+		/**
+		 * Get the relation object that correspond to the link with a given ORM
+		 *
+		 * @param toWhat The ORM descriptor we want the relation object of
+		 * @param relationClass If specified, it'll look for a relation having strictly the given class
+		 * @return Returns the desired relation or null if no such defined
+		 */
+		public function getRelationTo( toWhat : ORMDescriptor, toWhatColumnName : String = null, relationClass : Class
+									   = null ) : IORMRelation
+		{
+			var rel : IORMRelation;
+			for each (rel in _relatedTo)
 			{
-				if ( result.hasOwnProperty(prop.columnName) )
+				if (rel.foreignDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel,
+																									  relationClass))
+					&& (!toWhatColumnName || toWhatColumnName == rel.foreignColumnName))
 				{
-					dataObject[prop.name] = result[prop.columnName];
-				}
-				else
-				{
-					dataObject[prop.name] = undefined;
+					return rel;
 				}
 			}
-			// prepare for relation properties
-			for each ( relation in _relatedTo )
+			return null;
+		}
+
+
+		/**
+		 * Get the SQL creation code of the table related to this model
+		 *
+		 * @param parametersDestination Used to bind the possible default values of the columns
+		 * @return The SQL code to create the table
+		 */
+		public function getSqlCreationCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var cols : Array = new Array(), prop : ORMPropertyDescriptor, rel : IORMRelation, res : String
+				= "CREATE TABLE \"" + tableName + "\"(", sql : String;
+			if (!primaryKeyProperty)
 			{
-				relation.setupOrmObject(object, dataObject, result);
+				throw new IllegalOperationError("You must define a primary key column to the table '"
+												+ tableName + "' (model '" + ormClassQName + "')");
 			}
+			cols.push(primaryKeyProperty.getSqlCode(parametersDestination));
+			for each (prop in _propertiesByName)
+			{
+				if (prop.isPrimaryKey)
+				{
+					continue;
+				}
+				cols.push(prop.getSqlCode(parametersDestination));
+			}
+			for each (rel in _relatedTo)
+			{
+				if (!_propertiesByColumnName.exists(rel.localColumnName) && (sql = rel.getLocalColumnSqlCode(parametersDestination)))
+				{
+					cols.push(sql);
+				}
+			}
+			res += cols.join(", ") + ")";
+			return res;
 		}
-		
-		
+
+
 		/**
-		 * The qname of the ORM class that describes this object
+		 * A global instance needed for relations and other stuffs
 		 */
-		public function get ormClassQName() : String
+		public function get globalOrmInstance() : ORM
 		{
-			return _ormClassQName;
+			if (!_globalOrmInstance)
+			{
+				_globalOrmInstance = factory();
+			}
+			return _globalOrmInstance;
 		}
-		
-		
-		/**
-		 * A pointer to the primary key property
-		 */
-		public function get primaryKeyProperty() : ORMPropertyDescriptor
-		{
-			return _primaryKeyProperty;
-		}
-		
-		
-		/**
-		 * Get the descriptor of a property looking at its name
-		 * 
-		 * @param name The name of the property we want the descriptor of
-		 * @return The appropriate property descriptor
-		 */
-		public function propertyDescriptor( name : String ) : ORMPropertyDescriptor
-		{
-			return _propertiesByName.get(name) as ORMPropertyDescriptor;
-		}
-		
-		
-		/**
-		 * Get the descriptor of a property looking at its column name
-		 * 
-		 * @param name The name of the column corresponding to the property we want the decriptor of
-		 * @return The descriptor of the proerty
-		 */
-		public function propertyDescriptorByColumnName( name : String ) : ORMPropertyDescriptor
-		{
-			return _propertiesByColumnName.get(name) as ORMPropertyDescriptor;
-		}
-		
-		
-		/**
-		 * The name of the table corresponding to this descriptor in the database
-		 */
-		public function get tableName() : String
-		{
-			return _tableName;
-		}
-		
-		
+
+
 		/**
 		 * A pointer to the ORM class that this descriptor describes
 		 */
@@ -398,119 +438,132 @@ package com.huafu.sql.orm
 		{
 			return _ormClass;
 		}
-		
-		
+
+
 		/**
-		 * The SQL creation code of the table related to this model
+		 * The qname of the ORM class that describes this object
 		 */
-		public function get sqlCreationCode() : String
+		public function get ormClassQName() : String
 		{
-			var cols : Array = new Array(),
-				prop : ORMPropertyDescriptor,
-				rel : IORMRelationDescriptor,
-				res : String = "CREATE TABLE \"" + tableName + "\"(";
-			if ( !primaryKeyProperty )
+			return _ormClassQName;
+		}
+
+
+		/**
+		 * A pointer to the primary key property
+		 */
+		public function get primaryKeyProperty() : ORMPropertyDescriptor
+		{
+			return _primaryKeyProperty;
+		}
+
+
+		/**
+		 * Get the descriptor of a property looking at its name
+		 *
+		 * @param name The name of the property we want the descriptor of
+		 * @return The appropriate property descriptor
+		 */
+		public function propertyDescriptor( name : String ) : ORMPropertyDescriptor
+		{
+			return _propertiesByName.get(name) as ORMPropertyDescriptor;
+		}
+
+
+		/**
+		 * Get the descriptor of a property looking at its column name
+		 *
+		 * @param name The name of the column corresponding to the property we want the decriptor of
+		 * @return The descriptor of the proerty
+		 */
+		public function propertyDescriptorByColumnName( name : String ) : ORMPropertyDescriptor
+		{
+			return _propertiesByColumnName.get(name) as ORMPropertyDescriptor;
+		}
+
+
+		/**
+		 * Load the data from a sql result to an ORM object that this object describe and also
+		 * prepare/load any property corresponding to a realtion
+		 *
+		 * @param result The row as an object to load in the ORM object
+		 * @param object The ORM object to load results in
+		 * @param dataObject The data object of the ORM object
+		 */
+		public function sqlResultRowToOrmObject( result : Object, object : ORM, dataObject : Object ) : void
+		{
+			var prop : ORMPropertyDescriptor, relation : IORMRelation;
+			// load normal properties
+			for each (prop in _propertiesByName)
 			{
-				throw new IllegalOperationError("You must define a primary key column to the table '" + tableName + "' (model '" + ormClassQName + "')");
-			}
-			cols.push(primaryKeyProperty.sqlCode);
-			for each ( prop in _propertiesByName )
-			{
-				if ( prop.isPrimaryKey )
+				if (result && result.hasOwnProperty(prop.columnName))
 				{
-					continue;
+					dataObject[prop.name] = result[prop.columnName];
 				}
-				cols.push(prop.sqlCode);
-			}
-			for each ( rel in _relatedTo )
-			{
-				if ( !_propertiesByColumnName.exists(rel.columnName) && rel.columnSqlCode )
+				else
 				{
-					cols.push(rel.columnSqlCode);
+					dataObject[prop.name] = result ? undefined : prop.defaultValue();
 				}
 			}
-			res += cols.join(", ") + ")";
-			return res;
-		}
-		
-		
-		/**
-		 * Get the appropriate descriptor for a given ORM object, creating it if necessary
-		 * 
-		 * @param ormObject The ORM object we want the descriptor of
-		 * @return The desired descriptor
-		 */
-		public static function forObject( ormObject : ORM ) : ORMDescriptor
-		{
-			var descriptor : ORMDescriptor = _allByClassQName.get(ormObject.classQName);
-			if ( !descriptor )
+			// prepare for relation properties
+			for each (relation in _relatedTo)
 			{
-				descriptor = new ORMDescriptor(ormObject.ormClass);
+				relation.setupOrmObject(object, dataObject, result);
 			}
-			return descriptor;
 		}
-		
-		
+
+
 		/**
-		 * Get a ORM descriptor describing the given ORM class, creating it if necessary
-		 * 
-		 * @param ormClass The ORM class we want the descriptor of
-		 * @return The desired ORM descriptor
+		 * The name of the table corresponding to this descriptor in the database
 		 */
-		public static function forClass( ormClass : Class ) : ORMDescriptor
+		public function get tableName() : String
 		{
-			var classQName : String = getQualifiedClassName(ormClass),
-				desc : ORMDescriptor = _allByClassQName.get(classQName);
-			if ( !desc )
+			return _tableName;
+		}
+
+
+		/**
+		 * Update the database to reflect the descriptor if necessary
+		 */
+		public function updateSchema() : void
+		{
+			var stmt : SQLiteStatement, schema : SQLTableSchema, params : SQLiteParameters;
+			if ((schema = connection.getTableSchema(tableName)))
 			{
-				desc = new ORMDescriptor(ormClass);
+				// the table exists, check if the schema is the same
+				//TODO: check the table's columns and alter if needed
+				//enterDebugger();
 			}
-			return desc;
-		}
-		
-		
-		/**
-		 * An array of all ORM class qnames already known
-		 */
-		public static function get allModelClassQNamesKnown() : Array
-		{
-			return _allByClassQName.keys();
-		}
-		
-		
-		/**
-		 * An array containing all known ORM descriptors
-		 */
-		public static function get allKnownOrmDescriptors() : Array
-		{
-			return _allByClassQName.toArray();
-		}
-		
-		
-		/**
-		 * Resolve a model name to the class object corresponding
-		 * 
-		 * @param className The name of the model's class
-		 * @param fromOrm The ORM descriptor from which trying to resolve from
-		 * @return The pointer to the ORM class
-		 */
-		public static function resolveOrmClass( className : String, fromOrm : ORMDescriptor ) : Class
-		{
-			var fullCN : String = ORMDescriptor.ormModelsPackageFullName + "::" + className,
-				ormClass : Class;
-			try
+			else
 			{
-				ormClass = getDefinitionByName(fullCN) as Class;
+				// the table doesn't exist, let's create it
+				params = new SQLiteParameters();
+				stmt = connection.createStatement(getSqlCreationCode(params), true);
+				params.softBindTo(stmt);
+				stmt.safeExecute();
 			}
-			catch ( err : ReferenceError )
+		}
+
+
+		/**
+		 * The updatedAt property if any
+		 */
+		public function get updatedAtProperty() : ORMPropertyDescriptor
+		{
+			return _updatedAtProperty;
+		}
+
+
+		/**
+		 * The logger for this class
+		 */
+		private function get logger() : ILogger
+		{
+			if (!_logger)
 			{
-				if ( err.errorID == 1065 )
-				{
-					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '" + className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.ormClass) + "', it should solve the problem.";
-				}
-				throw err;
+				_logger = Huafu.getLoggerFor(ORMDescriptor);
 			}
-			return ormClass;
+			return _logger;
 		}
 	}
 }
