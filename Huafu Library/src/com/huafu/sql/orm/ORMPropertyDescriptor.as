@@ -27,6 +27,8 @@
 
 package com.huafu.sql.orm
 {
+	import com.huafu.sql.query.SQLiteParameters;
+	import com.huafu.utils.DateUtil;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
@@ -52,7 +54,8 @@ package com.huafu.sql.orm
 			var meta : ReflectionMetadata = property.uniqueMetadata("Column");
 			return new ORMPropertyDescriptor(ownerOrm, property.name, property.dataType, meta.argValueString("name"),
 											 meta.argValueString("type"), meta.hasArgument("nullable"),
-											 meta.argValueNumber("size", 0), meta.hasArgument("unique"));
+											 meta.argValueNumber("size", 0), meta.hasArgument("unique"),
+											 meta.argValueString("defaultValue"));
 		}
 
 
@@ -67,11 +70,13 @@ package com.huafu.sql.orm
 		 * @param nullable If the property can be null or not
 		 * @param columnDataLength The column's data length
 		 * @param unique If the column is unique
+		 * @param defaultValue The default value for this column
 		 */
 		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String,
 											   columnName : String = null, columnType : String = null,
 											   nullable : Boolean = false, columnDataLength : Number
-											   = 0, unique : Boolean = false )
+											   = 0, unique : Boolean = false, defaultValue : String
+											   = null )
 		{
 			_ormDescriptor = ormDescriptor;
 			_name = name;
@@ -82,6 +87,7 @@ package com.huafu.sql.orm
 			_columnType = columnType || type.split("::").pop().toString();
 			_columnTypeSize = columnDataLength;
 			_unique = unique;
+			_defaultValue = defaultValue;
 			if (_columnType == "ByteArray")
 			{
 				_columnType = "BLOB";
@@ -94,7 +100,7 @@ package com.huafu.sql.orm
 			{
 				_columnType = "DATETIME";
 			}
-			else if (_columnType in [ "Number", "Float" ])
+			else if (_columnType in [ "Number" ])
 			{
 				_columnType = "FLOAT";
 			}
@@ -117,6 +123,10 @@ package com.huafu.sql.orm
 		 * The size of the column data type in the database
 		 */
 		private var _columnTypeSize : Number;
+		/**
+		 * The default vaue of the column
+		 */
+		private var _defaultValue : String;
 		/**
 		 * Name of the property
 		 */
@@ -171,6 +181,70 @@ package com.huafu.sql.orm
 		public function get columnName() : String
 		{
 			return _columnName;
+		}
+
+
+		/**
+		 * The default value of the column
+		 */
+		public function defaultValue() : *
+		{
+			var res : * = null;
+			if (_defaultValue !== null)
+			{
+				// TODO: make a case with any possible type, the constructor parameter might not work for all
+				if (_typeClass === Date)
+				{
+					res = DateUtil.parse(_defaultValue);
+				}
+				else
+				{
+					res = new _typeClass(_defaultValue);
+				}
+			}
+			else
+			{
+				res = new _typeClass();
+			}
+			return res;
+		}
+
+
+		/**
+		 * Get the SQL code that creates the columns
+		 *
+		 * @parametersDestination Used to bind the possible default value of the column
+		 * @return The SQL code of the column
+		 */
+		public function getSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var res : String = "\"" + columnName + "\" " + columnDataType;
+			if (columnDataLength > 0)
+			{
+				res += "(" + columnDataLength + ")";
+			}
+			res += " " + (isNullable ? "" : "NOT ") + "NULL";
+			if (_defaultValue === null)
+			{
+				res += " DEFAULT NULL";
+			}
+			else
+			{
+				res += " DEFAULT ?";
+				if (parametersDestination)
+				{
+					parametersDestination.bind(defaultValue());
+				}
+			}
+			if (isPrimaryKey)
+			{
+				res += " PRIMARY KEY AUTOINCREMENT";
+			}
+			else if (isUnique)
+			{
+				res += " UNIQUE";
+			}
+			return res;
 		}
 
 
@@ -231,29 +305,6 @@ package com.huafu.sql.orm
 		public function get ormDescriptor() : ORMDescriptor
 		{
 			return _ormDescriptor;
-		}
-
-
-		/**
-		 * The SQL code that creates the columns
-		 */
-		public function get sqlCode() : String
-		{
-			var res : String = "\"" + columnName + "\" " + columnDataType;
-			if (columnDataLength > 0)
-			{
-				res += "(" + columnDataLength + ")";
-			}
-			res += " " + (isNullable ? "" : "NOT ") + "NULL";
-			if (isPrimaryKey)
-			{
-				res += " PRIMARY KEY AUTOINCREMENT";
-			}
-			if (isUnique)
-			{
-				res += " UNIQUE";
-			}
-			return res;
 		}
 	}
 }

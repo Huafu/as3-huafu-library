@@ -32,18 +32,15 @@ package com.huafu.sql.orm
 	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.sql.orm.relation.IORMRelation;
 	import com.huafu.sql.orm.relation.ORMRelation;
+	import com.huafu.sql.query.SQLiteParameters;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
-	import flash.data.SQLResult;
 	import flash.data.SQLTableSchema;
 	import flash.errors.IllegalOperationError;
-	import flash.errors.SQLError;
 	import flash.utils.getDefinitionByName;
-	import flash.utils.getTimer;
-	import mx.collections.ArrayList;
 	import mx.logging.ILogger;
 	import avmplus.getQualifiedClassName;
 
@@ -386,6 +383,42 @@ package com.huafu.sql.orm
 
 
 		/**
+		 * Get the SQL creation code of the table related to this model
+		 *
+		 * @param parametersDestination Used to bind the possible default values of the columns
+		 * @return The SQL code to create the table
+		 */
+		public function getSqlCreationCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var cols : Array = new Array(), prop : ORMPropertyDescriptor, rel : IORMRelation, res : String
+				= "CREATE TABLE \"" + tableName + "\"(", sql : String;
+			if (!primaryKeyProperty)
+			{
+				throw new IllegalOperationError("You must define a primary key column to the table '"
+												+ tableName + "' (model '" + ormClassQName + "')");
+			}
+			cols.push(primaryKeyProperty.getSqlCode(parametersDestination));
+			for each (prop in _propertiesByName)
+			{
+				if (prop.isPrimaryKey)
+				{
+					continue;
+				}
+				cols.push(prop.getSqlCode(parametersDestination));
+			}
+			for each (rel in _relatedTo)
+			{
+				if (!_propertiesByColumnName.exists(rel.localColumnName) && (sql = rel.getLocalColumnSqlCode(parametersDestination)))
+				{
+					cols.push(sql);
+				}
+			}
+			res += cols.join(", ") + ")";
+			return res;
+		}
+
+
+		/**
 		 * A global instance needed for relations and other stuffs
 		 */
 		public function get globalOrmInstance() : ORM
@@ -450,39 +483,6 @@ package com.huafu.sql.orm
 
 
 		/**
-		 * The SQL creation code of the table related to this model
-		 */
-		public function get sqlCreationCode() : String
-		{
-			var cols : Array = new Array(), prop : ORMPropertyDescriptor, rel : IORMRelation, res : String
-				= "CREATE TABLE \"" + tableName + "\"(";
-			if (!primaryKeyProperty)
-			{
-				throw new IllegalOperationError("You must define a primary key column to the table '"
-												+ tableName + "' (model '" + ormClassQName + "')");
-			}
-			cols.push(primaryKeyProperty.sqlCode);
-			for each (prop in _propertiesByName)
-			{
-				if (prop.isPrimaryKey)
-				{
-					continue;
-				}
-				cols.push(prop.sqlCode);
-			}
-			for each (rel in _relatedTo)
-			{
-				if (!_propertiesByColumnName.exists(rel.localColumnName) && rel.localColumnSqlCode)
-				{
-					cols.push(rel.localColumnSqlCode);
-				}
-			}
-			res += cols.join(", ") + ")";
-			return res;
-		}
-
-
-		/**
 		 * Load the data from a sql result to an ORM object that this object describe and also
 		 * prepare/load any property corresponding to a realtion
 		 *
@@ -502,7 +502,7 @@ package com.huafu.sql.orm
 				}
 				else
 				{
-					dataObject[prop.name] = undefined;
+					dataObject[prop.name] = result ? undefined : prop.defaultValue();
 				}
 			}
 			// prepare for relation properties
@@ -527,16 +527,19 @@ package com.huafu.sql.orm
 		 */
 		public function updateDatabase() : void
 		{
-			var stmt : SQLiteStatement, schema : SQLTableSchema;
+			var stmt : SQLiteStatement, schema : SQLTableSchema, params : SQLiteParameters;
 			if ((schema = connection.getTableSchema(tableName)))
 			{
 				// the table exists, check if the schema is the same
 				//TODO: check the table's columns and alter if needed
+				//enterDebugger();
 			}
 			else
 			{
 				// the table doesn't exist, let's create it
-				stmt = connection.createStatement(sqlCreationCode, true);
+				params = new SQLiteParameters();
+				stmt = connection.createStatement(getSqlCreationCode(params), true);
+				params.softBindTo(stmt);
 				stmt.safeExecute();
 			}
 		}
