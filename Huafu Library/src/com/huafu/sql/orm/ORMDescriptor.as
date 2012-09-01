@@ -231,7 +231,7 @@ package com.huafu.sql.orm
 						 + ormClassQName + "'");
 
 			// update the DB schema if necessary
-			updateDatabase();
+			updateSchema();
 		}
 
 		/**
@@ -525,7 +525,7 @@ package com.huafu.sql.orm
 		/**
 		 * Update the database to reflect the descriptor if necessary
 		 */
-		public function updateDatabase() : void
+		public function updateSchema() : void
 		{
 			var stmt : SQLiteStatement, schema : SQLTableSchema, params : SQLiteParameters;
 			if ((schema = connection.getTableSchema(tableName)))
