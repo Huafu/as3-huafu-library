@@ -34,8 +34,6 @@ package com.huafu.sql
 	import flash.events.SQLErrorEvent;
 	import flash.net.Responder;
 	import mx.logging.ILogger;
-	import mx.logging.Log;
-	import mx.logging.LogLogger;
 
 
 	/**
@@ -121,6 +119,15 @@ package com.huafu.sql
 			(sqlConnection as SQLiteConnection).autoOpen();
 			logger.debug("Executing a SQL query: " + text);
 			super.execute(prefetch, responder);
+		}
+
+
+		/**
+		 * Is the statement cached?
+		 */
+		public function get isCached() : Boolean
+		{
+			return _cached;
 		}
 
 

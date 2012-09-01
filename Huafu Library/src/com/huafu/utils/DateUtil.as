@@ -25,70 +25,75 @@
 /*============================================================================*/
 
 
-package com.huafu.common
+package com.huafu.utils
 {
 	import flash.errors.IllegalOperationError;
-	import mx.logging.ILogger;
-	import mx.logging.Log;
-	import mx.logging.LogEventLevel;
-	import mx.logging.targets.TraceTarget;
-	import avmplus.getQualifiedClassName;
 
 
 	/**
-	 * Global class handling common operations
+	 * Helper class to manipulate dates
 	 */
-	public final class Huafu
+	public final class DateUtil
 	{
-		protected static var _consoleLogTarget : TraceTarget = null;
-		protected static var _loggingToConsole : Boolean     = false;
+		private static var _allParts : Array = [ "year", "month", "day", "hour", "minute", "second" ];
+		private static var _parsers : Object = { '([0-9]{4})-([0-9]{2})-([0-9]{2})(?: ([0-9]{2})\\:([0-9]{2})(?:\\:([0-9]{2})))\\s*': { year: 1,
+					month: 2, day: 3, hour: 4, minute: 5, second: 6 }};
 
 
 		/**
-		 * Get the logger for a given class
+		 * Better parser than the AS native one which can understand formats such as YYYY-MM-DD HH:MM:SS
 		 *
-		 * @param theClass The class to get the logger of
+		 * @param date The date to parse as a string
+		 * @return The parsed date
 		 */
-		public static function getLoggerFor( theClass : Class ) : ILogger
+		public static function parse( date : String ) : Date
 		{
-			var name : String = getQualifiedClassName(theClass).replace("::", ".");
-			return Log.getLogger(name);
-		}
-
-
-		public static function get traceEnabled() : Boolean
-		{
-			return _loggingToConsole;
+			var match : Array, re : RegExp, name : String, parser : Object, num : Number = Date.parse(date),
+				parts : Object = {}, part : String, v : String;
+			if (!date)
+			{
+				return new Date(NaN);
+			}
+			if (!isNaN(num))
+			{
+				return new Date(num);
+			}
+			for (name in _parsers)
+			{
+				parser = _parsers[name];
+				if (!(re = parser.regexp))
+				{
+					re = new RegExp(name);
+					parser.regexp = re;
+				}
+				if ((match = date.match(re)) && match.length > 0)
+				{
+					// got a match, use this parser to create the date
+					for each (part in _allParts)
+					{
+						if (parser.hasOwnProperty(part) && parser[part] <= match.length && (v = match[parser[part]]))
+						{
+							parts[part] = parseInt(v, 10);
+						}
+						else
+						{
+							part[part] = null;
+						}
+					}
+					return new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.
+									second);
+				}
+			}
+			return new Date(NaN);
 		}
 
 
 		/**
-		 * Whether the trace is enabled or not
+		 * Abstract class - avoid instanciation
 		 */
-		public static function set traceEnabled( value : Boolean ) : void
+		public function DateUtil()
 		{
-			if (value == _loggingToConsole)
-			{
-				return;
-			}
-			if (!_consoleLogTarget)
-			{
-				_consoleLogTarget = new TraceTarget();
-				_consoleLogTarget.filters = [ "mx.rpc.*", "mx.messaging.*", "com.huafu.*" ];
-				_consoleLogTarget.level = LogEventLevel.ALL;
-				_consoleLogTarget.includeCategory = true;
-				_consoleLogTarget.includeDate = true;
-				_consoleLogTarget.includeLevel = true;
-				_consoleLogTarget.includeTime = true;
-			}
-			Log[value ? "addTarget" : "removeTarget"](_consoleLogTarget);
-			_loggingToConsole = value;
-		}
-
-
-		public function Huafu()
-		{
-			throw new IllegalOperationError("Huafu is an abstract class");
+			throw new IllegalOperationError("The DateUtil is an abstract class");
 		}
 	}
 }

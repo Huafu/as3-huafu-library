@@ -32,6 +32,7 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.orm.ORMPropertyDescriptor;
 	import com.huafu.sql.query.SQLiteCondition;
+	import com.huafu.sql.query.SQLiteParameters;
 	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
@@ -205,6 +206,15 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#getLocalColumnSqlCode()
+		 */
+		public function getLocalColumnSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			return _localColumnSqlCode;
+		}
+
+
+		/**
 		 * @copy IORMRelation#getSqlCondition()
 		 */
 		public function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String
@@ -228,15 +238,6 @@ package com.huafu.sql.orm.relation
 		public function get localColumnName() : String
 		{
 			return _localColumnName;
-		}
-
-
-		/**
-		 * @copy IORMRelation#localColumnSqlCode
-		 */
-		public function get localColumnSqlCode() : String
-		{
-			return _localColumnSqlCode;
 		}
 
 

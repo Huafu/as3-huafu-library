@@ -30,9 +30,8 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.orm.ORMPropertyDescriptor;
+	import com.huafu.sql.query.SQLiteParameters;
 	import com.huafu.sql.query.SQLiteQuery;
-	import com.huafu.utils.reflection.ReflectionMetadata;
-	import com.huafu.utils.reflection.ReflectionProperty;
 
 
 	/**
@@ -65,6 +64,13 @@ package com.huafu.sql.orm.relation
 		 */
 		function get foreignRelation() : IORMRelation;
 		/**
+		 * Get the SQL code that creates the column
+		 *
+		 * @parametersDestination Used to bind the possible default value of the column
+		 * @return The SQL code of the column
+		 */
+		function getLocalColumnSqlCode( parametersDestination : SQLiteParameters = null ) : String;
+		/**
 		 * Get the SQL condition to make the link between the 2 or 3 tables involved in the relation
 		 *
 		 * @param localTableAlias The alias of the local table (owning the relation)
@@ -78,10 +84,6 @@ package com.huafu.sql.orm.relation
 		 * Name of the column used to make the relation in the table of the ORM owner of this relation
 		 */
 		function get localColumnName() : String;
-		/**
-		 * The SQL code of the column in the table owning the relation, if any
-		 */
-		function get localColumnSqlCode() : String;
 		/**
 		 * The ORM descriptor owning the relation
 		 */

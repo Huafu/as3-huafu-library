@@ -30,8 +30,7 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.orm.ORMPropertyDescriptor;
-	import com.huafu.sql.query.SQLiteCondition;
-	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.sql.query.SQLiteParameters;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
 
@@ -73,6 +72,30 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#getLocalColumnSqlCode()
+		 */
+		public override function getLocalColumnSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var p : ORMPropertyDescriptor;
+			if (!_localColumnSqlCode)
+			{
+				if ((p = ownerDescriptor.propertyDescriptorByColumnName(localColumnName)))
+				{
+					return p.getSqlCode(parametersDestination);
+				}
+				p = foreignDescriptor.propertyDescriptorByColumnName(foreignColumnName);
+				_localColumnSqlCode = "\"" + localColumnName + "\" " + p.columnDataType;
+				if (p.columnDataLength > 0)
+				{
+					_localColumnSqlCode += "(" + p.columnDataLength + ")";
+				}
+				_localColumnSqlCode += " " + (isNullable ? "" : "NOT ") + "NULL";
+			}
+			return _localColumnSqlCode;
+		}
+
+
+		/**
 		 * Whether there can be no linked object or not
 		 */
 		public function get isNullable() : Boolean
@@ -91,30 +114,6 @@ package com.huafu.sql.orm.relation
 				_localColumnName = foreignDescriptor.tableName + "_id";
 			}
 			return _localColumnName;
-		}
-
-
-		/**
-		 * @copy IORMRelation#localColumnSqlCode
-		 */
-		public override function get localColumnSqlCode() : String
-		{
-			var p : ORMPropertyDescriptor;
-			if (!_localColumnSqlCode)
-			{
-				if ((p = ownerDescriptor.propertyDescriptorByColumnName(localColumnName)))
-				{
-					return p.sqlCode;
-				}
-				p = foreignDescriptor.propertyDescriptorByColumnName(foreignColumnName);
-				_localColumnSqlCode = "\"" + localColumnName + "\" " + p.columnDataType;
-				if (p.columnDataLength > 0)
-				{
-					_localColumnSqlCode += "(" + p.columnDataLength + ")";
-				}
-				_localColumnSqlCode += " " + (isNullable ? "" : "NOT ") + "NULL";
-			}
-			return _localColumnSqlCode;
 		}
 
 

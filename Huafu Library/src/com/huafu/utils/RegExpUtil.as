@@ -25,70 +25,38 @@
 /*============================================================================*/
 
 
-package com.huafu.common
+package com.huafu.utils
 {
 	import flash.errors.IllegalOperationError;
-	import mx.logging.ILogger;
-	import mx.logging.Log;
-	import mx.logging.LogEventLevel;
-	import mx.logging.targets.TraceTarget;
-	import avmplus.getQualifiedClassName;
 
 
 	/**
-	 * Global class handling common operations
+	 * Helper to manipulate RegExp
 	 */
-	public final class Huafu
+	public final class RegExpUtil
 	{
-		protected static var _consoleLogTarget : TraceTarget = null;
-		protected static var _loggingToConsole : Boolean     = false;
+		private static var _escape : RegExp;
 
 
 		/**
-		 * Get the logger for a given class
+		 * Escape regex special caracters in the given string
 		 *
-		 * @param theClass The class to get the logger of
+		 * @param source The string containing the possible regex special chars to escape
+		 * @return The string with escaped regex special chars
 		 */
-		public static function getLoggerFor( theClass : Class ) : ILogger
+		public static function escape( source : String ) : String
 		{
-			var name : String = getQualifiedClassName(theClass).replace("::", ".");
-			return Log.getLogger(name);
-		}
-
-
-		public static function get traceEnabled() : Boolean
-		{
-			return _loggingToConsole;
-		}
-
-
-		/**
-		 * Whether the trace is enabled or not
-		 */
-		public static function set traceEnabled( value : Boolean ) : void
-		{
-			if (value == _loggingToConsole)
+			if (!_escape)
 			{
-				return;
+				_escape = new RegExp("([{}\(\)\^$&.\*\?\/\+\|\[\\\\]|\]|\-)", "g");
 			}
-			if (!_consoleLogTarget)
-			{
-				_consoleLogTarget = new TraceTarget();
-				_consoleLogTarget.filters = [ "mx.rpc.*", "mx.messaging.*", "com.huafu.*" ];
-				_consoleLogTarget.level = LogEventLevel.ALL;
-				_consoleLogTarget.includeCategory = true;
-				_consoleLogTarget.includeDate = true;
-				_consoleLogTarget.includeLevel = true;
-				_consoleLogTarget.includeTime = true;
-			}
-			Log[value ? "addTarget" : "removeTarget"](_consoleLogTarget);
-			_loggingToConsole = value;
+			return source.replace(_escape, "\\$1");
 		}
 
 
-		public function Huafu()
+		public function RegExpUtil()
 		{
-			throw new IllegalOperationError("Huafu is an abstract class");
+			throw new IllegalOperationError("The RegExpUtil is an abstract class");
 		}
 	}
 }
