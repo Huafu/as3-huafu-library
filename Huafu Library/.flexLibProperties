@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="com.huafu.sql.SQLiteConnection"/>
+    <classEntry path="com.huafu.sql.SQLiteStatement"/>
+    <classEntry path="com.huafu.sql.orm.ISchemaTranslation"/>
+    <classEntry path="com.huafu.sql.orm.ORM"/>
+    <classEntry path="com.huafu.sql.orm.ORMDescriptor"/>
+    <classEntry path="com.huafu.sql.orm.ORMPropertyDescriptor"/>
+    <classEntry path="com.huafu.utils.HashMap"/>
+    <classEntry path="com.huafu.sql.orm.ORMEvent"/>
+    <classEntry path="com.huafu.sql.orm.ORMIterator"/>
+    <classEntry path="com.huafu.utils.reflection.ReflectionClass"/>
+    <classEntry path="com.huafu.utils.reflection.ReflectionMetadata"/>
+    <classEntry path="com.huafu.utils.reflection.ReflectionBase"/>
+    <classEntry path="com.huafu.utils.reflection.ReflectionProperty"/>
+    <classEntry path="com.huafu.sql.orm.ORMHasOneDescriptor"/>
+    <classEntry path="com.huafu.sql.orm.ORMRelationDescriptorBase"/>
+    <classEntry path="com.huafu.sql.orm.ORMHasManyDescriptor"/>
+    <classEntry path="com.huafu.sql.orm.ORMBelongsToDescriptor"/>
+    <classEntry path="com.huafu.sql.orm.ORMHasManyUsingDescriptor"/>
+    <classEntry path="com.huafu.sql.query.SQLiteQuery"/>
+    <classEntry path="com.huafu.sql.query.SQLiteConditionGroup"/>
+    <classEntry path="com.huafu.sql.query.SQLiteCondition"/>
+    <classEntry path="com.huafu.sql.query.SQLiteParameters"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelation"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationHasOne"/>
+    <classEntry path="com.huafu.sql.orm.relation.IORMRelation"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationHasMany"/>
+    <classEntry path="com.huafu.sql.orm.relation.ORMRelationBridge"/>
+    <classEntry path="com.huafu.common.Huafu"/>
+    <classEntry path="com.huafu.utils.RegExpUtil"/>
+    <classEntry path="com.huafu.utils.DateUtil"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>
