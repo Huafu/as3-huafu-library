@@ -30,16 +30,14 @@ package com.huafu.sql.query
 	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.utils.RegExpUtil;
 	import com.huafu.utils.reflection.ReflectionClass;
-	
 	import flash.data.SQLStatement;
 	import flash.errors.IllegalOperationError;
-	import flash.utils.Proxy;
 
 
 	/**
 	 * Handle the binding and storage of name indexed and/or 0 indexed parameters
 	 */
-	public class SQLiteParameters extends Proxy
+	public class SQLiteParameters
 	{
 
 		/**
@@ -49,8 +47,7 @@ package com.huafu.sql.query
 		public function SQLiteParameters( ... parameters : Array )
 		{
 			super();
-			namedParams = {};
-			zeroBasedParams = new Array();
+			removeAll();
 			bind.apply(this, parameters);
 		}
 
@@ -141,6 +138,16 @@ package com.huafu.sql.query
 
 
 		/**
+		 * Remove all deffined parameters
+		 */
+		public function removeAll() : void
+		{
+			namedParams = {};
+			zeroBasedParams = new Array();
+		}
+
+
+		/**
 		 * Bind all parameters to a SQL statement but not using the parameters native object.
 		 * It'll first run a query to get all values as string, then replace the variables in the original query
 		 * CAUTION this is usefull for CREATE statements for example which doesn't accept binds
@@ -168,7 +175,7 @@ package com.huafu.sql.query
 				statement.parameters[name] = namedParams[name];
 				cols.push("CAST(" + name + " AS TEXT) AS v" + (v++));
 			}
-			if ( v == 0 )
+			if (v == 0)
 			{
 				return;
 			}
