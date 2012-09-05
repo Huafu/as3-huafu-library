@@ -30,8 +30,8 @@ package com.huafu.sql.query
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
 	import com.huafu.sql.orm.ORMIterator;
+	import com.huafu.utils.HashMap;
 	import com.huafu.utils.reflection.ReflectionClass;
-	import flash.data.SQLResult;
 
 
 	/**
@@ -54,6 +54,11 @@ package com.huafu.sql.query
 	 */
 	public class SQLiteQuery
 	{
+		/* query types */
+		public static const DELETE : String = "DELETE";
+		public static const INSERT : String = "INSERT";
+		public static const SELECT : String = "SELECT";
+		public static const UPDATE : String = "UPDATE";
 
 
 		/**
@@ -69,6 +74,7 @@ package com.huafu.sql.query
 			this.connection = connection;
 			_conditions = new SQLiteConditionGroup();
 			_havings = new SQLiteConditionGroup();
+			_parameters = new SQLiteParameters();
 			reset();
 		}
 
@@ -80,6 +86,11 @@ package com.huafu.sql.query
 		 * The conditions for the where part
 		 */
 		internal var _conditions : SQLiteConditionGroup;
+
+		/**
+		 * Stores the data to insert or update
+		 */
+		internal var _dataToUpdate : HashMap;
 		/**
 		 * List of fields
 		 */
@@ -109,6 +120,10 @@ package com.huafu.sql.query
 		 */
 		internal var _orderByList : Array;
 		/**
+		 * The parameters used
+		 */
+		internal var _parameters : SQLiteParameters;
+		/**
 		 * The comment prepending any query
 		 */
 		internal var _prependingComment : String;
@@ -120,6 +135,10 @@ package com.huafu.sql.query
 		 * List of tables
 		 */
 		internal var _tableList : Array;
+		/**
+		 * The type of query
+		 */
+		internal var _type : String;
 		/**
 		 * Whether to use cached statements or not
 		 */
@@ -156,9 +175,33 @@ package com.huafu.sql.query
 		public function andWhere( ... conditions : Array ) : SQLiteQuery
 		{
 			_inHaving = false;
-			_where(this._conditions, SQLiteConditionGroup.AND, conditions);
+			_where(_conditions, SQLiteConditionGroup.AND, conditions);
 			_statement = null;
 			return this;
+		}
+
+
+		/**
+		 * Binds only one value to the paramters
+		 *
+		 * @param name The name of the parameter
+		 * @param value The value of the parameter
+		 * @return The string to put in the query where the parameter is needed
+		 *
+		 * @exemple
+		 * <listing>
+		 * 	var q : SQLiteQuery = conn.createQueryBuilder();
+		 * 	trace(q.select("u.name")
+		 * 		.from({u: "user"})
+		 * 		.where("u.user_id = " + q.bind(12))
+		 * 		.sql);
+		 * 	// SELECT u.name FROM user AS u WHERE u.user_id = :user_id
+		 * </listing>
+		 */
+		public function bind( name : String, value : * ) : String
+		{
+			_parameters.bindOne(name, value);
+			return ':' + name;
 		}
 
 
@@ -189,22 +232,38 @@ package com.huafu.sql.query
 		 */
 		public function compile() : SQLiteStatement
 		{
-			var params : SQLiteParameters = new SQLiteParameters, sql : String = sqlCode(params);
+			var params : SQLiteParameters = new SQLiteParameters, sql : String = sqlCode(params), index : int;
 			if (!_statement)
 			{
 				_statement = connection.createStatement(sql, !_useCachedStatements);
 			}
-			_statement.clearParameters();
+			params.bindTo(_statement);
+			_parameters.bindTo(_statement);
 			if (_limitCount)
 			{
-				params.bind(_limitCount);
+				index = params.zeroBasedParams.length;
+				_statement.parameters[index++] = _limitCount;
 				if (_limitOffset)
 				{
-					params.bind(_limitOffset);
+					_statement.parameters[index++] = _limitOffset;
 				}
 			}
-			params.bindTo(_statement);
 			return _statement;
+		}
+
+
+		/**
+		 * Initiates a delete query
+		 *
+		 * @param table The table where to delete from
+		 * @return Returns this object to do chained calls
+		 */
+		public function deleteFrom( table : String ) : SQLiteQuery
+		{
+			reset();
+			_type = DELETE;
+			_add([ table ], _tableList);
+			return this;
 		}
 
 
@@ -285,6 +344,21 @@ package com.huafu.sql.query
 
 
 		/**
+		 * Initiates a insert query
+		 *
+		 * @param table The table where to insert
+		 * @return Returns this object to do chained calls
+		 */
+		public function insertInto( table : String ) : SQLiteQuery
+		{
+			reset();
+			_type = INSERT;
+			_add([ table ], _tableList);
+			return this;
+		}
+
+
+		/**
 		 * Set the limits of record and optional offset
 		 *
 		 * @param count The maximum of records to get
@@ -295,6 +369,7 @@ package com.huafu.sql.query
 		{
 			_limitCount = count;
 			_limitOffset = offset;
+			_statement = null;
 			return this;
 		}
 
@@ -415,6 +490,9 @@ package com.huafu.sql.query
 			_havings.reset();
 			_statement = null;
 			_inHaving = false;
+			_dataToUpdate = new HashMap();
+			_type = SELECT;
+			_parameters.removeAll();
 			return this;
 		}
 
@@ -429,53 +507,87 @@ package com.huafu.sql.query
 		 */
 		public function select( ... fields : Array ) : SQLiteQuery
 		{
+			reset();
 			_add(fields, _fieldList);
-			_statement = null;
+			return this;
+		}
+
+
+		/**
+		 * Used in update and insert queries to define the value of the column(s) to update/insert
+		 *
+		 * @param nameOrObject The name of the column, or an object mapping name of columns to the SQL code
+		 * @param value The value for the column with the given name
+		 * @return Returns this object to do chained calls
+		 */
+		public function set( nameOrObject : *, value : * = null ) : SQLiteQuery
+		{
+			var name : String;
+			if (arguments.length == 2)
+			{
+				_dataToUpdate[nameOrObject as String] = bind(nameOrObject as String, value);
+			}
+			else
+			{
+				for (name in nameOrObject)
+				{
+					_dataToUpdate[name] = bind(name, nameOrObject[name]);
+				}
+			}
+			return this;
+		}
+
+
+		/**
+		 * Same as set, but the value(s) are sql code directly
+		 *
+		 * @param nameOrObject The name of the column, or an object mapping name of columns to the SQL code
+		 * @param valueSqlCode The SQL code for the column with the given name
+		 * @return Returns this object to do chained calls
+		 */
+		public function setSql( nameOrObject : *, valueSqlCode : String = null ) : SQLiteQuery
+		{
+			var name : String;
+			if (arguments.length == 2)
+			{
+				_dataToUpdate[nameOrObject as String] = valueSqlCode;
+			}
+			else
+			{
+				for (name in nameOrObject)
+				{
+					_dataToUpdate[name] = nameOrObject[name];
+				}
+			}
 			return this;
 		}
 
 
 		/**
 		 * Get the SQL code of the query, optionally binding parameters to the
-		 * given parameters object
+		 * given parameter object
 		 *
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
 		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
 		{
-			var sql : String;
-			sql = "SELECT " + (_fieldList.length == 0 ? "*" : _fieldList.join(", ")) + " FROM " + _tableList.
-				join(", ");
-			if (_conditions.length > 0)
-			{
-				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
-			}
-			if (_groupByList.length > 0)
-			{
-				sql += " GROUP BY " + _groupByList.join(", ");
-			}
-			if (_havings.length > 0)
-			{
-				sql += " HAVING " + _havings.sqlCode(parametersDestination);
-			}
-			if (_orderByList.length > 0)
-			{
-				sql += " ORDER BY " + _orderByList.join(", ");
-			}
-			if (_limitCount)
-			{
-				sql += " LIMIT ?";
-				if (_limitOffset)
-				{
-					sql += ", ?";
-				}
-			}
-			if (_prependingComment)
-			{
-				sql = "/* " + _prependingComment + " */ " + sql;
-			}
-			return sql;
+			return this["_" + _type.toLowerCase() + "SqlCode"](parametersDestination);
+		}
+
+
+		/**
+		 * Initiates an update query
+		 *
+		 * @param table The table where to update
+		 * @return Returns this object to do chained calls
+		 */
+		public function update( table : String ) : SQLiteQuery
+		{
+			reset();
+			_type = UPDATE;
+			_add([ table ], _tableList);
+			return this;
 		}
 
 
@@ -519,6 +631,117 @@ package com.huafu.sql.query
 					}
 				}
 			}
+		}
+
+
+		/**
+		 * Create the SQL code for a delete query
+		 *
+		 * @param parametersDestination Where to bind the parameters to if any
+		 * @return The SQL code of the query
+		 */
+		private function _deleteSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var sql : String;
+			sql = "DELETE FROM " + _tableList[0];
+			if (_conditions.length > 0)
+			{
+				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
+			}
+			if (_prependingComment)
+			{
+				sql = "/* " + _prependingComment + " */ " + sql;
+			}
+			return sql;
+		}
+
+
+		/**
+		 * Create the SQL code for a insert query
+		 *
+		 * @param parametersDestination Where to bind the parameters to if any
+		 * @return The SQL code of the query
+		 */
+		private function _insertSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var sql : String;
+			sql = "INSERT INTO " + _tableList[0] + " (" + _dataToUpdate.keys().join(", ") + ") VALUES ("
+				+ _dataToUpdate.toArray().join(", ") + ")";
+			if (_prependingComment)
+			{
+				sql = "/* " + _prependingComment + " */ " + sql;
+			}
+			return sql;
+		}
+
+
+		/**
+		 * Create the SQL code for a select query
+		 *
+		 * @param parametersDestination Where to bind the parameters to if any
+		 * @return The SQL code of the query
+		 */
+		private function _selectSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var sql : String;
+			sql = "SELECT " + (_fieldList.length == 0 ? "*" : _fieldList.join(", ")) + " FROM " + _tableList.
+				join(", ");
+			if (_conditions.length > 0)
+			{
+				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
+			}
+			if (_groupByList.length > 0)
+			{
+				sql += " GROUP BY " + _groupByList.join(", ");
+			}
+			if (_havings.length > 0)
+			{
+				sql += " HAVING " + _havings.sqlCode(parametersDestination);
+			}
+			if (_orderByList.length > 0)
+			{
+				sql += " ORDER BY " + _orderByList.join(", ");
+			}
+			if (_limitCount)
+			{
+				sql += " LIMIT ?";
+				if (_limitOffset)
+				{
+					sql += ", ?";
+				}
+			}
+			if (_prependingComment)
+			{
+				sql = "/* " + _prependingComment + " */ " + sql;
+			}
+			return sql;
+		}
+
+
+		/**
+		 * Create the SQL code for a update query
+		 *
+		 * @param parametersDestination Where to bind the parameters to if any
+		 * @return The SQL code of the query
+		 */
+		private function _updateSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		{
+			var sql : String, parts : Array = [], name : String;
+			sql = "UPDATE " + _tableList[0] + " SET ";
+			for (name in _dataToUpdate)
+			{
+				parts.push(name + " = " + _dataToUpdate[name]);
+			}
+			sql += parts.join(", ");
+			if (_conditions.length > 0)
+			{
+				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
+			}
+			if (_prependingComment)
+			{
+				sql = "/* " + _prependingComment + " */ " + sql;
+			}
+			return sql;
 		}
 
 
