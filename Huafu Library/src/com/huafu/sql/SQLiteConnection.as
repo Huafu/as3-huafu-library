@@ -112,6 +112,11 @@ package com.huafu.sql
 		 * The cached version of the schema information
 		 */
 		private var _cachedSchema : SQLSchemaResult;
+
+
+		/**
+		 * The logger
+		 */
 		private var _logger : ILogger;
 		/**
 		 * Name of the connection
@@ -261,6 +266,18 @@ package com.huafu.sql
 		public function get name() : String
 		{
 			return _name;
+		}
+
+
+		/**
+		 * Quote a string according to SQLite standard
+		 *
+		 * @param string The string to escape
+		 * @return The escaped string
+		 */
+		public function quote( string : String ) : String
+		{
+			return string.replace(/\'/g, "''");
 		}
 
 
