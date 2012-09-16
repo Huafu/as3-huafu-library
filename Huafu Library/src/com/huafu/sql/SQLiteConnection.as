@@ -52,14 +52,20 @@ package com.huafu.sql
 		 * Used to know the defails connection name
 		 */
 		public static var defaultConnectionName : String = "main";
+
+
 		/**
 		 * Used to save the name of the default database
 		 */
-		public static var defaultDatabaseName : String   = "main";
+		public static var defaultDatabaseName : String = "main";
+
+
 		/**
 		 * All connections indexed by their name
 		 */
-		private static var _allByName : HashMap          = new HashMap();
+		private static var _allByName : HashMap = new HashMap();
+
+
 		/**
 		 * Internally used to know if it's actually creating a connection or not
 		 */
@@ -73,7 +79,7 @@ package com.huafu.sql
 		 * @param name The name of the connection
 		 * @return The connection object
 		 */
-		public static function instance( name : String = null ) : SQLiteConnection
+		public static function instance(name : String = null) : SQLiteConnection
 		{
 			if (!name)
 			{
@@ -96,7 +102,7 @@ package com.huafu.sql
 		 *
 		 * @param name The name of the connection
 		 */
-		public function SQLiteConnection( name : String )
+		public function SQLiteConnection(name : String)
 		{
 			super();
 			if (!_creatingConnection)
@@ -108,6 +114,7 @@ package com.huafu.sql
 			_name = name;
 		}
 
+
 		/**
 		 * The cached version of the schema information
 		 */
@@ -118,6 +125,8 @@ package com.huafu.sql
 		 * The logger
 		 */
 		private var _logger : ILogger;
+
+
 		/**
 		 * Name of the connection
 		 */
@@ -128,6 +137,8 @@ package com.huafu.sql
 		 * Used to cache all statments looking at their SQL
 		 */
 		private var _stmtCache : HashMap;
+
+
 		/**
 		 * The schemas of tables indexed by db_name.table_name
 		 */
@@ -152,7 +163,7 @@ package com.huafu.sql
 		/**
 		 * @inheritDoc
 		 */
-		public override function begin( option : String = null, responder : Responder = null ) : void
+		override public function begin(option : String = null, responder : Responder = null) : void
 		{
 			autoOpen();
 			super.begin(option, responder);
@@ -166,10 +177,10 @@ package com.huafu.sql
 		 * @param databaseName The name of the database where is the table
 		 * @return The create statement ready to be binded with parameters and executed
 		 */
-		public function createInsertStatement( tableName : String, databaseName : String = null ) : SQLiteStatement
+		public function createInsertStatement(tableName : String, databaseName : String = null) : SQLiteStatement
 		{
 			var sTable : SQLTableSchema = getTableSchema(tableName, databaseName), sql : String, cols : Array
-				= new Array(), col : SQLColumnSchema;
+					= new Array(), col : SQLColumnSchema;
 			sql = "INSERT INTO " + getTableName(tableName, databaseName) + "(";
 			for each (col in sTable.columns)
 			{
@@ -190,7 +201,7 @@ package com.huafu.sql
 		 * @param noCache If true, the cache won't be used or set
 		 * @return The cache or new statement
 		 */
-		public function createStatement( sql : String = null, noCache : Boolean = false ) : SQLiteStatement
+		public function createStatement(sql : String = null, noCache : Boolean = false) : SQLiteStatement
 		{
 			var res : SQLiteStatement = (noCache || !sql) ? null : _stmtCache.get(sql);
 			if (res)
@@ -216,7 +227,7 @@ package com.huafu.sql
 		 * @param databaseName The name of the database
 		 * @return The schema of that table
 		 */
-		public function getTableSchema( tableName : String, databaseName : String = null ) : SQLTableSchema
+		public function getTableSchema(tableName : String, databaseName : String = null) : SQLTableSchema
 		{
 			var key : String = getTableName(tableName, databaseName);
 			if (!_cachedSchema || !(key in _tableSchemas))
@@ -231,9 +242,9 @@ package com.huafu.sql
 		 * Loads the schema after opening connection if necessary, also caches the schema
 		 * @inheritDoc
 		 */
-		public override function loadSchema( type : Class = null, name : String = null, database : String
-											 = "main", includeColumnSchema : Boolean = true, responder : Responder
-											 = null ) : void
+		override public function loadSchema(type : Class = null, name : String = null, database : String
+				= "main", includeColumnSchema : Boolean = true, responder : Responder
+				= null) : void
 		{
 			var sTable : SQLTableSchema;
 			autoOpen();
@@ -243,7 +254,7 @@ package com.huafu.sql
 			{
 				super.loadSchema(type, name, database, includeColumnSchema, responder);
 			}
-			catch ( err : SQLError )
+			catch (err : SQLError)
 			{
 				// forget the "No schema objects in database 'xxx' were found." error
 				if (err.errorID != 3115 || err.detailID != 1010)
@@ -275,7 +286,7 @@ package com.huafu.sql
 		 * @param string The string to escape
 		 * @return The escaped string
 		 */
-		public function quote( string : String ) : String
+		public function quote(string : String) : String
 		{
 			return string.replace(/\'/g, "''");
 		}
@@ -288,7 +299,7 @@ package com.huafu.sql
 		 * @param databaseName The name of the database, if not set it'll be the default one
 		 * @return The full name of the table
 		 */
-		private function getTableName( tableName : String, databaseName : String = null ) : String
+		private function getTableName(tableName : String, databaseName : String = null) : String
 		{
 			return (databaseName ? databaseName : defaultDatabaseName) + "." + tableName;
 		}

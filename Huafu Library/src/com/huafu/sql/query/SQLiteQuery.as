@@ -29,9 +29,9 @@ package com.huafu.sql.query
 {
 	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.SQLiteStatement;
-	import com.huafu.sql.orm.ORMIterator;
 	import com.huafu.utils.HashMap;
 	import com.huafu.utils.reflection.ReflectionClass;
+	import flash.data.SQLResult;
 
 
 	/**
@@ -56,8 +56,14 @@ package com.huafu.sql.query
 	{
 		/* query types */
 		public static const DELETE : String = "DELETE";
+
+
 		public static const INSERT : String = "INSERT";
+
+
 		public static const SELECT : String = "SELECT";
+
+
 		public static const UPDATE : String = "UPDATE";
 
 
@@ -68,8 +74,8 @@ package com.huafu.sql.query
 		 * @param useCachedStatements Whether to use cached statements or not
 		 * @param prependQueriesWithComment If given, the string will be put in a comment before each statemetns
 		 */
-		public function SQLiteQuery( connection : SQLiteConnection = null, useCachedStatements : Boolean
-									 = false, prependQueriesWithComment : String = null )
+		public function SQLiteQuery(connection : SQLiteConnection = null, useCachedStatements : Boolean
+				= false, prependQueriesWithComment : String = null)
 		{
 			this.connection = connection;
 			_conditions = new SQLiteConditionGroup();
@@ -78,67 +84,97 @@ package com.huafu.sql.query
 			reset();
 		}
 
+
 		/**
 		 * The connection used to execute the query
 		 */
 		public var connection : SQLiteConnection;
+
+
 		/**
 		 * The conditions for the where part
 		 */
 		internal var _conditions : SQLiteConditionGroup;
 
+
 		/**
 		 * Stores the data to insert or update
 		 */
 		internal var _dataToUpdate : HashMap;
+
+
 		/**
 		 * List of fields
 		 */
 		internal var _fieldList : Array;
+
+
 		/**
 		 * The list of group by
 		 */
 		internal var _groupByList : Array;
+
+
 		/**
 		 * The conditions of the having part
 		 */
 		internal var _havings : SQLiteConditionGroup;
+
+
 		/**
 		 * Stores whether the last function call was related to having or to where
 		 */
 		internal var _inHaving : Boolean;
+
+
 		/**
 		 * The limit part
 		 */
 		internal var _limitCount : int;
+
+
 		/**
 		 * The offset part
 		 */
 		internal var _limitOffset : int;
+
+
 		/**
 		 * THe list of order by
 		 */
 		internal var _orderByList : Array;
+
+
 		/**
 		 * The parameters used
 		 */
 		internal var _parameters : SQLiteParameters;
+
+
 		/**
 		 * The comment prepending any query
 		 */
 		internal var _prependingComment : String;
+
+
 		/**
 		 * The statement if compiled and nothing changed
 		 */
 		internal var _statement : SQLiteStatement;
+
+
 		/**
 		 * List of tables
 		 */
 		internal var _tableList : Array;
+
+
 		/**
 		 * The type of query
 		 */
 		internal var _type : String;
+
+
 		/**
 		 * Whether to use cached statements or not
 		 */
@@ -152,7 +188,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @see #andWhere
 		 */
-		public function andHaving( ... conditions : Array ) : SQLiteQuery
+		public function andHaving(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = true;
 			_where(_havings, SQLiteConditionGroup.AND, conditions);
@@ -172,7 +208,7 @@ package com.huafu.sql.query
 		 * of the name of the property
 		 * @return Returns this object to do chained calls
 		 */
-		public function andWhere( ... conditions : Array ) : SQLiteQuery
+		public function andWhere(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = false;
 			_where(_conditions, SQLiteConditionGroup.AND, conditions);
@@ -193,12 +229,12 @@ package com.huafu.sql.query
 		 * 	var q : SQLiteQuery = conn.createQueryBuilder();
 		 * 	trace(q.select("u.name")
 		 * 		.from({u: "user"})
-		 * 		.where("u.user_id = " + q.bind(12))
+		 * 		.where("u.user_id = " + q.bind("user_id", 12))
 		 * 		.sql);
 		 * 	// SELECT u.name FROM user AS u WHERE u.user_id = :user_id
 		 * </listing>
 		 */
-		public function bind( name : String, value : * ) : String
+		public function bind(name : String, value : *) : String
 		{
 			_parameters.bindOne(name, value);
 			return ':' + name;
@@ -258,12 +294,25 @@ package com.huafu.sql.query
 		 * @param table The table where to delete from
 		 * @return Returns this object to do chained calls
 		 */
-		public function deleteFrom( table : String ) : SQLiteQuery
+		public function deleteFrom(table : String) : SQLiteQuery
 		{
 			reset();
 			_type = DELETE;
-			_add([ table ], _tableList);
+			_add([table], _tableList);
 			return this;
+		}
+
+
+		/**
+		 * Execute the query and get the result object
+		 *
+		 * @return The result object
+		 */
+		public function execute() : SQLResult
+		{
+			var stmt : SQLiteStatement = compile()
+			stmt.safeExecute();
+			return stmt.getResult();
 		}
 
 
@@ -273,7 +322,7 @@ package com.huafu.sql.query
 		 * @param tables The table(s) to add (see #select() method to see what parameters can be sent)
 		 * @return Returns this object to do chained calls
 		 */
-		public function from( ... tables : Array ) : SQLiteQuery
+		public function from(... tables : Array) : SQLiteQuery
 		{
 			_add(tables, _tableList);
 			_statement = null;
@@ -295,14 +344,18 @@ package com.huafu.sql.query
 
 
 		/**
-		 * Compile, execute and get the results of the query
+		 * Get only the first result of the result set
 		 *
-		 * @param ormClass The ORM class we want an iterator of
-		 * @return The ORMIterator of all results
+		 * @return The first result if any, else null
 		 */
-		public function getAsOrmIterator( ormClass : Class = null ) : ORMIterator
+		public function getOne() : Object
 		{
-			return new ORMIterator(ormClass, get());
+			var res : Array = get();
+			if (res.length > 0)
+			{
+				return res[0];
+			}
+			return null;
 		}
 
 
@@ -314,7 +367,7 @@ package com.huafu.sql.query
 		 * the SQL code of the group by
 		 * @return Returns this object to do chained calls
 		 */
-		public function groupBy( ... fields : Array ) : SQLiteQuery
+		public function groupBy(... fields : Array) : SQLiteQuery
 		{
 			var field : *;
 			if (fields.length == 1 && fields[0] is Array)
@@ -334,7 +387,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @see #andWhere
 		 */
-		public function having( ... conditions : Array ) : SQLiteQuery
+		public function having(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = true;
 			_where(_havings, SQLiteConditionGroup.AND, conditions);
@@ -349,11 +402,11 @@ package com.huafu.sql.query
 		 * @param table The table where to insert
 		 * @return Returns this object to do chained calls
 		 */
-		public function insertInto( table : String ) : SQLiteQuery
+		public function insertInto(table : String) : SQLiteQuery
 		{
 			reset();
 			_type = INSERT;
-			_add([ table ], _tableList);
+			_add([table], _tableList);
 			return this;
 		}
 
@@ -365,7 +418,7 @@ package com.huafu.sql.query
 		 * @param offset The first record to get in the results
 		 * @return Returns this object to do chained calls
 		 */
-		public function limit( count : int, offset : int = 0 ) : SQLiteQuery
+		public function limit(count : int, offset : int = 0) : SQLiteQuery
 		{
 			_limitCount = count;
 			_limitOffset = offset;
@@ -381,7 +434,7 @@ package com.huafu.sql.query
 		 * will be used to aggregate the block
 		 * @return Returns this object to do chained calls
 		 */
-		public function openBracket( logicOperator : String = SQLiteConditionGroup.AND ) : SQLiteQuery
+		public function openBracket(logicOperator : String = SQLiteConditionGroup.AND) : SQLiteQuery
 		{
 			var group : SQLiteConditionGroup = new SQLiteConditionGroup();
 			if (_inHaving)
@@ -406,7 +459,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @see #andWhere
 		 */
-		public function orHaving( ... conditions : Array ) : SQLiteQuery
+		public function orHaving(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = true;
 			_where(_havings, SQLiteConditionGroup.OR, conditions);
@@ -422,7 +475,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @see #andWhere
 		 */
-		public function orWhere( ... conditions : Array ) : SQLiteQuery
+		public function orWhere(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = false;
 			_where(this._conditions, SQLiteConditionGroup.OR, conditions);
@@ -440,9 +493,13 @@ package com.huafu.sql.query
 		 * to order to and property values as the direction (asc/desc)
 		 * @return Returns this object to do chained calls
 		 */
-		public function orderBy( ... fields : Array ) : SQLiteQuery
+		public function orderBy(... fields : Array) : SQLiteQuery
 		{
 			var field : *, name : String;
+			if (!fields)
+			{
+				return this;
+			}
 			if (fields.length == 1 && fields[0] is Array)
 			{
 				fields = fields[0];
@@ -505,7 +562,7 @@ package com.huafu.sql.query
 		 * the SQL code for that alias
 		 * @return Returns this object to do chained calls
 		 */
-		public function select( ... fields : Array ) : SQLiteQuery
+		public function select(... fields : Array) : SQLiteQuery
 		{
 			reset();
 			_add(fields, _fieldList);
@@ -520,7 +577,7 @@ package com.huafu.sql.query
 		 * @param value The value for the column with the given name
 		 * @return Returns this object to do chained calls
 		 */
-		public function set( nameOrObject : *, value : * = null ) : SQLiteQuery
+		public function set(nameOrObject : *, value : * = null) : SQLiteQuery
 		{
 			var name : String;
 			if (arguments.length == 2)
@@ -545,7 +602,7 @@ package com.huafu.sql.query
 		 * @param valueSqlCode The SQL code for the column with the given name
 		 * @return Returns this object to do chained calls
 		 */
-		public function setSql( nameOrObject : *, valueSqlCode : String = null ) : SQLiteQuery
+		public function setSql(nameOrObject : *, valueSqlCode : String = null) : SQLiteQuery
 		{
 			var name : String;
 			if (arguments.length == 2)
@@ -570,7 +627,7 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
-		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
+		public function sqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			return this["_" + _type.toLowerCase() + "SqlCode"](parametersDestination);
 		}
@@ -582,11 +639,11 @@ package com.huafu.sql.query
 		 * @param table The table where to update
 		 * @return Returns this object to do chained calls
 		 */
-		public function update( table : String ) : SQLiteQuery
+		public function update(table : String) : SQLiteQuery
 		{
 			reset();
 			_type = UPDATE;
-			_add([ table ], _tableList);
+			_add([table], _tableList);
 			return this;
 		}
 
@@ -598,7 +655,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @see #andWhere
 		 */
-		public function where( ... conditions : Array ) : SQLiteQuery
+		public function where(... conditions : Array) : SQLiteQuery
 		{
 			_inHaving = false;
 			_where(this._conditions, SQLiteConditionGroup.AND, conditions);
@@ -610,7 +667,7 @@ package com.huafu.sql.query
 		/**
 		 * Add columns or tables to the given list
 		 */
-		private function _add( data : Array, destination : Array ) : void
+		private function _add(data : Array, destination : Array) : void
 		{
 			var thing : *, name : String;
 			if (data.length == 1 && data[0] is Array)
@@ -640,7 +697,7 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
-		private function _deleteSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		private function _deleteSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var sql : String;
 			sql = "DELETE FROM " + _tableList[0];
@@ -662,11 +719,11 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
-		private function _insertSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		private function _insertSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var sql : String;
 			sql = "INSERT INTO " + _tableList[0] + " (" + _dataToUpdate.keys().join(", ") + ") VALUES ("
-				+ _dataToUpdate.toArray().join(", ") + ")";
+					+ _dataToUpdate.toArray().join(", ") + ")";
 			if (_prependingComment)
 			{
 				sql = "/* " + _prependingComment + " */ " + sql;
@@ -681,11 +738,11 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
-		private function _selectSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		private function _selectSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var sql : String;
 			sql = "SELECT " + (_fieldList.length == 0 ? "*" : _fieldList.join(", ")) + " FROM " + _tableList.
-				join(", ");
+					join(", ");
 			if (_conditions.length > 0)
 			{
 				sql += " WHERE " + _conditions.sqlCode(parametersDestination);
@@ -702,10 +759,10 @@ package com.huafu.sql.query
 			{
 				sql += " ORDER BY " + _orderByList.join(", ");
 			}
-			if (_limitCount)
+			if (_limitCount > 0)
 			{
 				sql += " LIMIT ?";
-				if (_limitOffset)
+				if (_limitOffset > 0)
 				{
 					sql += ", ?";
 				}
@@ -724,7 +781,7 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters to if any
 		 * @return The SQL code of the query
 		 */
-		private function _updateSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		private function _updateSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var sql : String, parts : Array = [], name : String;
 			sql = "UPDATE " + _tableList[0] + " SET ";
@@ -748,9 +805,13 @@ package com.huafu.sql.query
 		/**
 		 * Add where conditions in a given condition group with the given logic operator
 		 */
-		private function _where( which : SQLiteConditionGroup, logicOp : String, conditions : Array ) : void
+		private function _where(which : SQLiteConditionGroup, logicOp : String, conditions : Array) : void
 		{
 			var condition : *, name : String, parts : Array;
+			if (!conditions || conditions.length == 0)
+			{
+				return;
+			}
 			if (conditions.length == 1 && conditions[0] is Array)
 			{
 				conditions = conditions[0];

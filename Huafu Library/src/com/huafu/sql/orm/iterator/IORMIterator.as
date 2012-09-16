@@ -25,77 +25,27 @@
 /*============================================================================*/
 
 
-package com.huafu.utils
+package com.huafu.sql.orm.iterator
 {
-	import flash.errors.IllegalOperationError;
+	import mx.collections.IList;
 
 
-	/**
-	 * Helper class to manipulate dates
-	 */
-	public final class DateUtil
+	public interface IORMIterator extends IList
 	{
-		private static var _allParts : Array = ["year", "month", "day", "hour", "minute", "second"];
-
-
-		private static var _parsers : Object = {'([0-9]{4})-([0-9]{2})-([0-9]{2})(?: ([0-9]{2})\\:([0-9]{2})(?:\\:([0-9]{2})))\\s*': {year: 1,
-						month: 2, day: 3, hour: 4, minute: 5, second: 6}};
-
-
 		/**
-		 * Better parser than the AS native one which can understand formats such as YYYY-MM-DD HH:MM:SS
+		 * Whether the iterator is persistent or not
+		 */
+		function get isPersistent() : Boolean;
+		/**
+		 * The ORM class of bojects delivered by the iterator
+		 */
+		function get ormClass() : Class;
+		/**
+		 * Creates an array of objects as if it was the result of a query returning all those ORM objects (ie: simple objects
+		 * with property names as the column names
 		 *
-		 * @param date The date to parse as a string
-		 * @return The parsed date
+		 * @return The array of all result objects of the ORM objects conatined in the collection
 		 */
-		public static function parse(date : String) : Date
-		{
-			var match : Array, re : RegExp, name : String, parser : Object, num : Number = Date.parse(date),
-					parts : Object = {}, part : String, v : String;
-			if (!date)
-			{
-				return new Date(NaN);
-			}
-			if (!isNaN(num))
-			{
-				return new Date(num);
-			}
-			for (name in _parsers)
-			{
-				parser = _parsers[name];
-				if (!(re = parser.regexp))
-				{
-					re = new RegExp(name);
-					parser.regexp = re;
-				}
-				if ((match = date.match(re)) && match.length > 0)
-				{
-					// got a match, use this parser to create the date
-					for each (part in _allParts)
-					{
-						if (parser.hasOwnProperty(part) && parser[part] <= match.length && (v = match[parser[part]]))
-						{
-							parts[part] = parseInt(v, 10);
-						}
-						else
-						{
-							part[part] = null;
-						}
-					}
-					return new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.
-							second);
-				}
-			}
-			return new Date(NaN);
-		}
-
-
-		/**
-		 * Abstract class - avoid instanciation
-		 */
-		public function DateUtil()
-		{
-			throw new IllegalOperationError("The DateUtil is an abstract class");
-		}
+		function toArrayOfResultObjects() : Array;
 	}
 }

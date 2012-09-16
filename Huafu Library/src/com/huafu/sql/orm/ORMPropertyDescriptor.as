@@ -49,13 +49,13 @@ package com.huafu.sql.orm
 		 * @param property The ReflectionProperty that the new descriptor will describe
 		 * @return The newly created ORMPropertyDescriptor
 		 */
-		public static function fromReflectionProperty( ownerOrm : ORMDescriptor, property : ReflectionProperty ) : ORMPropertyDescriptor
+		public static function fromReflectionProperty(ownerOrm : ORMDescriptor, property : ReflectionProperty) : ORMPropertyDescriptor
 		{
 			var meta : ReflectionMetadata = property.uniqueMetadata("Column");
 			return new ORMPropertyDescriptor(ownerOrm, property.name, property.dataType, meta.argValueString("name"),
-											 meta.argValueString("type"), meta.hasArgument("nullable"),
-											 meta.argValueNumber("size", 0), meta.hasArgument("unique"),
-											 meta.argValueString("defaultValue"));
+					meta.argValueString("type"), meta.hasArgument("nullable"),
+					meta.argValueNumber("size", 0), meta.hasArgument("unique"),
+					meta.argValueString("defaultValue"));
 		}
 
 
@@ -72,11 +72,11 @@ package com.huafu.sql.orm
 		 * @param unique If the column is unique
 		 * @param defaultValue The default value for this column
 		 */
-		public function ORMPropertyDescriptor( ormDescriptor : ORMDescriptor, name : String, type : String,
-											   columnName : String = null, columnType : String = null,
-											   nullable : Boolean = false, columnDataLength : Number
-											   = 0, unique : Boolean = false, defaultValue : String
-											   = null )
+		public function ORMPropertyDescriptor(ormDescriptor : ORMDescriptor, name : String, type : String,
+				columnName : String = null, columnType : String = null,
+				nullable : Boolean = false, columnDataLength : Number
+				= 0, unique : Boolean = false, defaultValue : String
+				= null)
 		{
 			_ormDescriptor = ormDescriptor;
 			_name = name;
@@ -92,7 +92,7 @@ package com.huafu.sql.orm
 			{
 				_columnType = "BLOB";
 			}
-			else if (_columnType in [ "uint", "int" ])
+			else if (_columnType in ["uint", "int"])
 			{
 				_columnType = "INTEGER";
 			}
@@ -100,7 +100,7 @@ package com.huafu.sql.orm
 			{
 				_columnType = "DATETIME";
 			}
-			else if (_columnType in [ "Number" ])
+			else if (_columnType in ["Number"])
 			{
 				_columnType = "FLOAT";
 			}
@@ -111,46 +111,67 @@ package com.huafu.sql.orm
 			_readOnly = false;
 		}
 
+
 		/**
 		 * Name of the column for that property in the database
 		 */
 		private var _columnName : String;
+
+
 		/**
 		 * The type of the column in the database
 		 */
 		private var _columnType : String;
+
+
 		/**
 		 * The size of the column data type in the database
 		 */
 		private var _columnTypeSize : Number;
+
+
 		/**
 		 * The default vaue of the column
 		 */
 		private var _defaultValue : String;
+
+
 		/**
 		 * Name of the property
 		 */
 		private var _name : String;
+
+
 		/**
 		 * Stores whether this property is nullable or not
 		 */
 		private var _nullable : Boolean;
+
+
 		/**
 		 * The ORM descriptor owning this property
 		 */
 		private var _ormDescriptor : ORMDescriptor;
+
+
 		/**
 		 * Stores whether this proeprty is read-only or not
 		 */
 		private var _readOnly : Boolean;
+
+
 		/**
 		 * The type of the property as a string
 		 */
 		private var _type : String;
+
+
 		/**
 		 * A pointer to the class of the property
 		 */
 		private var _typeClass : Class;
+
+
 		/**
 		 * Stores whether this property is unique or not
 		 */
@@ -192,7 +213,8 @@ package com.huafu.sql.orm
 			var res : * = null;
 			if (_defaultValue !== null)
 			{
-				// TODO: make a case with any possible type, the constructor parameter might not work for all
+				// TODO: make a case with any possible type, the constructor parameter might not
+				// work for all
 				if (_typeClass === Date)
 				{
 					res = DateUtil.parse(_defaultValue);
@@ -202,10 +224,10 @@ package com.huafu.sql.orm
 					res = new _typeClass(_defaultValue);
 				}
 			}
-			else
+			/*else
 			{
 				res = new _typeClass();
-			}
+			}*/
 			return res;
 		}
 
@@ -216,7 +238,7 @@ package com.huafu.sql.orm
 		 * @parametersDestination Used to bind the possible default value of the column
 		 * @return The SQL code of the column
 		 */
-		public function getSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		public function getSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var res : String = "\"" + columnName + "\" " + columnDataType;
 			if (columnDataLength > 0)
@@ -275,7 +297,7 @@ package com.huafu.sql.orm
 		}
 
 
-		public function set isReadOnly( value : Boolean ) : void
+		public function set isReadOnly(value : Boolean) : void
 		{
 			_readOnly = value;
 		}

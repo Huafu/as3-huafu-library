@@ -29,8 +29,10 @@ package com.huafu.sql.orm.relation
 {
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
-	import com.huafu.sql.orm.ORMIterator;
+	import com.huafu.sql.orm.iterator.IORMIterator;
+	import com.huafu.sql.orm.iterator.ORMRelationIterator;
 	import com.huafu.sql.query.SQLiteQuery;
+	import com.huafu.utils.reflection.ReflectionClass;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
 
@@ -40,31 +42,70 @@ package com.huafu.sql.orm.relation
 	 */
 	public class ORMRelationBridge extends ORMRelation implements IORMRelation
 	{
+		public static const USING_PK_ALIAS : String = "__using_pk_value";
+
 
 		/**
 		 * @copy ORMRelation#ORMRelation()
 		 */
-		public function ORMRelationBridge( ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
-										   metadata : ReflectionMetadata )
+		public function ORMRelationBridge(ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
+				metadata : ReflectionMetadata)
 		{
 			super(ownerDescriptor, property, metadata);
 			_usingOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata, "usingClass");
 			_foreignOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata);
-			_foreignIsUnique = !(property.dataTypeClass === ORMIterator);
+			_foreignIsUnique = !ReflectionClass.isClassInheriting(property.dataTypeClass, IORMIterator);
 		}
+
 
 		protected var _localToUsing : IORMRelation;
 
+
 		protected var _usingOrmClass : Class;
+
+
 		protected var _usingOrmClassName : String;
+
+
 		protected var _usingOrmDescriptor : ORMDescriptor;
+
+
 		protected var _usingToForeign : IORMRelation;
+
+
+		/**
+		 * @copy IORMRelation#addForeignItem()
+		 */
+		public function addForeignItem(ownerOrmObject : ORM, item : ORM, saveAdditionalRelatedDataIn : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			var using : ORM;
+			if (!(checkForeignItemClass(item, throwError) && checkOwnerObjectClass(ownerOrmObject, throwError)
+					&& checkIfFromDb(item, throwError) && checkIfFromDb(ownerOrmObject, throwError)))
+			{
+				return false;
+			}
+			using = new usingOrmClass();
+			using.setColumnValue(ownerToUsingRelation.foreignColumnName, ownerOrmObject.getColumnValue(localColumnName));
+			using.setColumnValue(usingToForeignRelation.localColumnName, item.getColumnValue(usingToForeignRelation.
+					foreignColumnName));
+			if (!using.save())
+			{
+				if (throwError)
+				{
+					throw new Error("Unable to save the table used as a bridge in the relation");
+				}
+				return false;
+			}
+			saveAdditionalRelatedDataIn[USING_PK_ALIAS] = using.primaryKeyValue;
+			return true;
+		}
 
 
 		/**
 		 * @copy IORMRelation#foreignColumnName
 		 */
-		public override function get foreignColumnName() : String
+		override public function get foreignColumnName() : String
 		{
 			if (!_foreignColumnName)
 			{
@@ -77,7 +118,7 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#foreignRelation
 		 */
-		public override function get foreignRelation() : IORMRelation
+		override public function get foreignRelation() : IORMRelation
 		{
 			if (!_foreignRelation)
 			{
@@ -90,18 +131,18 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#getSqlCondition()
 		 */
-		public override function getSqlCondition( localTableAlias : String = null, foreignTableAlias : String
-												  = null, usingTableAlias : String = null ) : String
+		override public function getSqlCondition(localTableAlias : String = null, foreignTableAlias : String
+				= null, usingTableAlias : String = null) : String
 		{
 			return ownerToUsingRelation.getSqlCondition(localTableAlias, usingTableAlias) + " AND " + usingToForeignRelation.
-				getSqlCondition(usingTableAlias, foreignTableAlias);
+					getSqlCondition(usingTableAlias, foreignTableAlias);
 		}
 
 
 		/**
 		 * @copy IORMRelation#localColumnName
 		 */
-		public override function get localColumnName() : String
+		override public function get localColumnName() : String
 		{
 			if (!_localColumnName)
 			{
@@ -125,11 +166,44 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#removeAllForeignItem()
+		 */
+		public function removeAllForeignItems(ownerOrmObject : ORM, throwError : Boolean = true) : Boolean
+		{
+			// TODO
+			return false;
+		}
+
+
+		/**
+		 * @copy IORMRelation#removeForeignItem()
+		 */
+		public function removeForeignItem(ownerOrmObject : ORM, item : ORM, additionalRelatedData : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			// TODO
+			return false;
+		}
+
+
+		/**
+		 * @copy IORMRelation#replaceForeignItem()
+		 */
+		public function replaceForeignItem(ownerOrmObject : ORM, oldItem : ORM, oldAdditionalRelatedData : Object,
+				newItem : ORM, saveNewItemAdditionalRelatedDataIn : Object, throwError : Boolean
+				= true) : Boolean
+		{
+			// TODO
+			return false;
+		}
+
+
+		/**
 		 * @copy IORMRelation#setupOrmObject()
 		 */
-		public function setupOrmObject( ormObject : ORM, ormObjectData : Object, usingData : Object ) : void
+		public function setupOrmObject(ormObject : ORM, ormObjectData : Object, usingData : Object) : void
 		{
-			var res : ORMIterator, foreignOrm : ORM, usingOrm : ORM, q : SQLiteQuery, result : Array;
+			var res : ORMRelationIterator, foreignOrm : ORM, usingOrm : ORM, q : SQLiteQuery, result : Array;
 			if (!usingData || !usingData[localColumnName])
 			{
 				ormObjectData[ownerPropertyName] = null;
@@ -137,9 +211,9 @@ package com.huafu.sql.orm.relation
 			}
 			foreignOrm = foreignDescriptor.globalOrmInstance;
 			usingOrm = usingDescriptor.globalOrmInstance;
-			foreignOrm.excludeSoftDeleted = usingOrm.excludeSoftDeleted = ormObject.excludeSoftDeleted;
-			q = foreignOrm.getPreparedQuery("f", false).select("f.*, u." + usingDescriptor.primaryKeyProperty.
-															   columnName + " AS __using_pk");
+			foreignOrm.excludeSoftDeletedRecords = usingOrm.excludeSoftDeletedRecords = ormObject.excludeSoftDeletedRecords;
+			q = foreignOrm.getPreparedSelectQuery("f", false).select("f.*, u." + usingDescriptor.primaryKeyProperty.
+					columnName + " AS " + USING_PK_ALIAS);
 			// add the using table
 			q.from(usingDescriptor.tableName + " AS u");
 			setupQueryCondition(q, ormObject, usingData, "l", "f", "u");
@@ -153,12 +227,13 @@ package com.huafu.sql.orm.relation
 				else
 				{
 					ormObjectData[ownerPropertyName] = new foreignOrmClass();
-					(ormObjectData[ownerPropertyName] as ORM).loadDataFromSqlResult(result[0]);
+					(ormObjectData[ownerPropertyName] as ORM).loadWithResult(result[0]);
 				}
 			}
 			else
 			{
-				ormObjectData[ownerPropertyName] = new ORMIterator(foreignOrmClass, q.compile(), {});
+				ormObjectData[ownerPropertyName] = new ORMRelationIterator(foreignOrmClass, q.get(),
+						ormObject, this);
 			}
 		}
 
@@ -166,9 +241,9 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#setupQueryCondition()
 		 */
-		public override function setupQueryCondition( query : SQLiteQuery, ormObject : ORM, usingData : Object,
-													  localTableAlias : String = null, foreignTableAlias : String
-													  = null, usingTableAlias : String = null ) : void
+		override public function setupQueryCondition(query : SQLiteQuery, ormObject : ORM, usingData : Object,
+				localTableAlias : String = null, foreignTableAlias : String
+				= null, usingTableAlias : String = null) : void
 		{
 			ownerToUsingRelation.setupQueryCondition(query, ormObject, usingData, localTableAlias, usingTableAlias);
 			query.where(usingToForeignRelation.getSqlCondition(usingTableAlias, foreignTableAlias));

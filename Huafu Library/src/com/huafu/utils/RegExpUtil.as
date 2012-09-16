@@ -44,7 +44,7 @@ package com.huafu.utils
 		 * @param source The string containing the possible regex special chars to escape
 		 * @return The string with escaped regex special chars
 		 */
-		public static function escape( source : String ) : String
+		public static function escape(source : String) : String
 		{
 			if (!_escape)
 			{

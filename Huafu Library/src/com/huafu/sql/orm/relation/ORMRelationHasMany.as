@@ -27,15 +27,14 @@
 
 package com.huafu.sql.orm.relation
 {
-	import com.huafu.sql.SQLiteStatement;
+	import com.huafu.sql.SQLiteConnection;
 	import com.huafu.sql.orm.ORM;
 	import com.huafu.sql.orm.ORMDescriptor;
-	import com.huafu.sql.orm.ORMIterator;
-	import com.huafu.sql.query.SQLiteCondition;
+	import com.huafu.sql.orm.iterator.ORMRelationIterator;
 	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
-	import flash.errors.IllegalOperationError;
+	import flash.data.SQLResult;
 
 
 	/**
@@ -46,8 +45,8 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy ORMRelation#ORMRelation()
 		 */
-		public function ORMRelationHasMany( ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
-											metadata : ReflectionMetadata )
+		public function ORMRelationHasMany(ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
+				metadata : ReflectionMetadata)
 		{
 			super(ownerDescriptor, property, metadata);
 			_foreignColumnName = metadata.argValueString("foreignColumn");
@@ -57,9 +56,28 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#addForeignItem()
+		 */
+		public function addForeignItem(ownerOrmObject : ORM, item : ORM, saveAdditionalRelatedDataIn : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			if (!checkForeignItemClass(item, throwError))
+			{
+				return false;
+			}
+			if (!checkIfFromDb(ownerOrmObject, throwError))
+			{
+				return false;
+			}
+			item.setColumnValue(foreignColumnName, ownerOrmObject.getColumnValue(localColumnName));
+			return item.save();
+		}
+
+
+		/**
 		 * @copy IORMRelation#foreignColumnName
 		 */
-		public override function get foreignColumnName() : String
+		override public function get foreignColumnName() : String
 		{
 			if (!_foreignColumnName)
 			{
@@ -72,7 +90,7 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#localColumnName
 		 */
-		public override function get localColumnName() : String
+		override public function get localColumnName() : String
 		{
 			if (!_localColumnName)
 			{
@@ -83,21 +101,100 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#removeAllForeignItem()
+		 */
+		public function removeAllForeignItems(ownerOrmObject : ORM, throwError : Boolean = true) : Boolean
+		{
+			var foreignOrm : ORM = foreignDescriptor.globalOrmInstance, q : SQLiteQuery = foreignOrm.
+					getQuery(true,
+					false), r : SQLResult;
+			foreignOrm.excludeSoftDeletedRecords = true;
+			if (foreignDescriptor.deletedAtProperty)
+			{
+				// soft delete
+				q.update(foreignDescriptor.tableName).set(foreignDescriptor.deletedAtProperty.columnName,
+						new Date());
+			}
+			else
+			{
+				// really delete
+				q.deleteFrom(foreignDescriptor.tableName);
+			}
+			q.where(foreignOrm.getDeletedCondition(), foreignColumnName + " = " + q.bind(foreignColumnName,
+					ownerOrmObject.getColumnValue(localColumnName)));
+			r = q.execute();
+			return true;
+		}
+
+
+		/**
+		 * @copy IORMRelation#removeForeignItem()
+		 */
+		public function removeForeignItem(ownerOrmObject : ORM, item : ORM, additionalRelatedData : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			if (!checkForeignItemClass(item, throwError))
+			{
+				return false;
+			}
+			if (!checkIfFromDb(ownerOrmObject, throwError))
+			{
+				return false;
+			}
+			return item.remove();
+		}
+
+
+		/**
+		 * @copy IORMRelation#replaceForeignItem()
+		 */
+		public function replaceForeignItem(ownerOrmObject : ORM, oldItem : ORM, oldAdditionalRelatedData : Object,
+				newItem : ORM, saveNewItemAdditionalRelatedDataIn : Object, throwError : Boolean
+				= true) : Boolean
+		{
+			var oldConn : SQLiteConnection = oldItem.connection, conn : SQLiteConnection = newItem.connection,
+					res : Boolean = false;
+			oldItem.connection = conn;
+			conn.begin();
+			try
+			{
+				res = removeForeignItem(ownerOrmObject, oldItem, oldAdditionalRelatedData, throwError)
+						&& addForeignItem(ownerOrmObject, newItem, saveNewItemAdditionalRelatedDataIn,
+						throwError);
+			}
+			catch (err : Error)
+			{
+				conn.rollback();
+				if (throwError)
+				{
+					throw err;
+				}
+				return false;
+			}
+			conn[res ? 'commit' : 'rollback']();
+			oldItem.connection = oldConn;
+			return res;
+		}
+
+
+		/**
 		 * @copy IORMRelation#setupOrmObject()
 		 */
-		public function setupOrmObject( ormObject : ORM, ormObjectData : Object, usingData : Object ) : void
+		public function setupOrmObject(ormObject : ORM, ormObjectData : Object, usingData : Object) : void
 		{
-			var res : ORMIterator, foreignOrm : ORM, q : SQLiteQuery;
+			var res : ORMRelationIterator, foreignOrm : ORM, q : SQLiteQuery;
 			if (!usingData || !usingData[localColumnName])
 			{
 				ormObjectData[ownerPropertyName] = null;
 				return;
 			}
 			foreignOrm = foreignDescriptor.globalOrmInstance;
-			foreignOrm.excludeSoftDeleted = ormObject.excludeSoftDeleted;
-			q = foreignOrm.getPreparedQuery();
-			q.where(new SQLiteCondition(foreignColumnName + " = ?", usingData[localColumnName]));
-			ormObjectData[ownerPropertyName] = new ORMIterator(foreignOrmClass, q.compile(), {});
+			foreignOrm.excludeSoftDeletedRecords = ormObject.excludeSoftDeletedRecords;
+			q = foreignOrm.getPreparedSelectQuery();
+			q.where(foreignColumnName + " = " + q.bind(foreignDescriptor.tableName + "_" + foreignColumnName,
+					usingData[localColumnName]));
+			ormObjectData[ownerPropertyName] = new ORMRelationIterator(foreignOrmClass, q.get(), ormObject,
+					this);
 		}
 	}
 }

@@ -38,6 +38,7 @@ package com.huafu.sql.orm
 	import com.huafu.utils.reflection.ReflectionClass;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
+	import flash.data.SQLColumnSchema;
 	import flash.data.SQLTableSchema;
 	import flash.errors.IllegalOperationError;
 	import flash.utils.getDefinitionByName;
@@ -55,10 +56,11 @@ package com.huafu.sql.orm
 		 */
 		public static var ormModelsPackageFullName : String = "models";
 
+
 		/**
 		 * Stores all ORM descriptor indexed by their class qname
 		 */
-		private static var _allByClassQName : HashMap       = new HashMap();
+		private static var _allByClassQName : HashMap = new HashMap();
 
 
 		/**
@@ -85,10 +87,10 @@ package com.huafu.sql.orm
 		 * @param ormClass The ORM class we want the descriptor of
 		 * @return The desired ORM descriptor
 		 */
-		public static function forClass( ormClass : Class ) : ORMDescriptor
+		public static function forClass(ormClass : Class) : ORMDescriptor
 		{
 			var classQName : String = getQualifiedClassName(ormClass), desc : ORMDescriptor = _allByClassQName.
-				get(classQName);
+					get(classQName);
 			if (!desc)
 			{
 				desc = new ORMDescriptor(ormClass);
@@ -103,9 +105,9 @@ package com.huafu.sql.orm
 		 * @param ormObject The ORM object we want the descriptor of
 		 * @return The desired descriptor
 		 */
-		public static function forObject( ormObject : ORM ) : ORMDescriptor
+		public static function forObject(ormObject : ORM) : ORMDescriptor
 		{
-			var descriptor : ORMDescriptor = _allByClassQName.get(ormObject.classQName);
+			var descriptor : ORMDescriptor = _allByClassQName.get(ormObject.ormClassQName);
 			if (!descriptor)
 			{
 				descriptor = new ORMDescriptor(ormObject.ormClass);
@@ -121,20 +123,21 @@ package com.huafu.sql.orm
 		 * @param fromOrm The ORM descriptor from which trying to resolve from
 		 * @return The pointer to the ORM class
 		 */
-		public static function resolveOrmClass( className : String, fromOrm : ORMDescriptor ) : Class
+		public static function resolveOrmClass(className : String, fromOrm : ORMDescriptor) : Class
 		{
 			var fullCN : String = ORMDescriptor.ormModelsPackageFullName + "::" + className, ormClass : Class;
 			try
 			{
 				ormClass = getDefinitionByName(fullCN) as Class;
 			}
-			catch ( err : ReferenceError )
+			catch (err : ReferenceError)
 			{
 				if (err.errorID == 1065)
 				{
 					err.message = err.message + " This is usually thrown because as3 cannot find your related ORM model's class. Try adding the line '"
-						+ className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.ormClass)
-						+ "', it should solve the problem.";
+							+ className + ";' in the constructor of '" + getQualifiedClassName(fromOrm.
+							ormClass)
+							+ "', it should solve the problem.";
 				}
 				throw err;
 			}
@@ -147,16 +150,17 @@ package com.huafu.sql.orm
 		 *
 		 * @param ormClass A pointer to the ORM class that this object will describe
 		 */
-		public function ORMDescriptor( ormClass : Class )
+		public function ORMDescriptor(ormClass : Class)
 		{
 			var reflection : ReflectionClass = ReflectionClass.forClass(ormClass), meta : ReflectionMetadata,
-				prop : ReflectionProperty, ormProp : ORMPropertyDescriptor, pk : String = "id", upd : String
-				= "updatedAt", cre : String = "createdAt", del : String = "deletedAt", relatedToProps : Array
-				= new Array();
+					prop : ReflectionProperty, ormProp : ORMPropertyDescriptor, pk : String = "id", upd : String
+					= "updatedAt", cre : String = "createdAt", del : String = "deletedAt", relatedToProps : Array
+					= new Array(), rel : IORMRelation;
 
 			// basic stuff
-			_ormClassQName = getQualifiedClassName(ormClass);
 			_ormClass = ormClass;
+			_ormClassQName = reflection.classQName;
+			_ormClassName = reflection.className;
 			_relatedTo = new HashMap();
 
 			// testing if the descriptor is already in the register
@@ -168,7 +172,7 @@ package com.huafu.sql.orm
 			// table and database
 			meta = reflection.uniqueMetadata("Table");
 			_tableName = meta.argValue("name") ? meta.argValueString("name") : StringUtil.unCamelize(reflection.
-																									 className);
+					className);
 			_databaseName = meta.argValue("database") ? meta.argValueString("database") : ORM.defaultDatabaseName;
 			_connectionName = meta.argValueString("connection", null);
 
@@ -222,63 +226,105 @@ package com.huafu.sql.orm
 			// before setting up the related objects, we need to register this class
 			_allByClassQName.set(ormClassQName, this);
 
+			_relationsPerColumn = {};
 			for each (prop in relatedToProps)
 			{
-				_relatedTo.set(prop.name, ORMRelation.fromReflectionProperty(this, prop));
+				rel = ORMRelation.fromReflectionProperty(this, prop);
+				if (!_relationsPerColumn[rel.localColumnName])
+				{
+					_relationsPerColumn[rel.localColumnName] = new Vector.<IORMRelation>();
+				}
+				_relationsPerColumn[rel.localColumnName].push(rel);
+				_relatedTo.set(prop.name, rel);
 			}
 
 			logger.debug("Created a new ORM descriptor for table '" + tableName + "' represented by ORM class '"
-						 + ormClassQName + "'");
+					+ ormClassQName + "'");
 
 			// update the DB schema if necessary
 			updateSchema();
 		}
 
+
+		/**
+		 * Stores all column names that are in the table
+		 */
+		private var _allColumnNames : Array;
+
+
 		/**
 		 * The SQL connection used for the related table
 		 */
 		private var _connection : SQLiteConnection;
+
+
 		/**
 		 * The name of the SQL connection used for the related table
 		 */
 		private var _connectionName : String;
+
+
 		/**
 		 * A pointer to the createdAt property of the ORM if any
 		 */
 		private var _createdAtProperty : ORMPropertyDescriptor;
+
+
 		/**
 		 * The name of the database where the table is
 		 */
 		private var _databaseName : String;
+
+
 		/**
 		 * A pointer to the deletedAt property of the ORM if any
 		 */
 		private var _deletedAtProperty : ORMPropertyDescriptor;
+
+
 		/**
 		 * A global instance needed for relations and other stuffs
 		 */
 		private var _globalOrmInstance : ORM;
+
+
+		/**
+		 * The logger
+		 */
 		private var _logger : ILogger;
+
 
 		// basic stuff
 		/**
 		 * Pointer to the ORM class that describes this object
 		 */
 		private var _ormClass : Class;
+
+
+		/**
+		 * Stores the name of the class withut package info
+		 */
+		private var _ormClassName : String;
+
+
 		/**
 		 * The qname of the ORM class taht describes this object
 		 */
 		private var _ormClassQName : String;
+
 
 		// special columns
 		/**
 		 * A pointer to the primary key property
 		 */
 		private var _primaryKeyProperty : ORMPropertyDescriptor;
+
+
 		/**
 		 * All properties of the ORM indexed by their column name
 		 */
 		private var _propertiesByColumnName : HashMap;
+
 
 		// properties indexed
 		/**
@@ -286,19 +332,64 @@ package com.huafu.sql.orm
 		 */
 		private var _propertiesByName : HashMap;
 
+
 		// relations
 		/**
 		 * Stores all relations (has one, has many, belongs to) indexed by property names
 		 */
 		private var _relatedTo : HashMap;
+
+
+		/**
+		 * All relations per column name
+		 */
+		private var _relationsPerColumn : Object;
+
+
+		/**
+		 * Names of the properties which are magic properties depending on a relation
+		 */
+		private var _relationsPropertyNames : Array;
+
+
 		/**
 		 * The name of the table in the database
 		 */
 		private var _tableName : String;
+
+
 		/**
 		 * A pointer to the updatedAt property of the ORM if any
 		 */
 		private var _updatedAtProperty : ORMPropertyDescriptor;
+
+
+		/**
+		 * All column names in an array
+		 */
+		public function get allColumnNames() : Array
+		{
+			return _allColumnNames;
+		}
+
+
+		/**
+		 * Gets the default value of a column
+		 *
+		 * @param columnName The name of the column to get the default value of
+		 * @return The default value for this column
+		 */
+		public function columnDefaultValue(columnName : String) : *
+		{
+			var prop : ORMPropertyDescriptor = propertyDescriptorByColumnName(columnName);
+			if (prop)
+			{
+				return prop.defaultValue();
+			}
+			// TODO: when loading the descriptor, get the default value of undefined columns
+			// somewhere and return it here
+			return null;
+		}
 
 
 		/**
@@ -335,24 +426,12 @@ package com.huafu.sql.orm
 
 
 		/**
-		 * Creates a new ORM instance of the model described by this descriptor
-		 *
-		 * @param id The id to auto load if needed
-		 * @return The new ORM instance
-		 */
-		public function factory( id : int = 0 ) : ORM
-		{
-			return ORM.factory(ormClass, id);
-		}
-
-
-		/**
 		 * Get the ORM relation descriptor that the given property name is holding
 		 *
 		 * @param propertyName The name of the property holding a relaiton
 		 * @return The ORM relation descriptor
 		 */
-		public function getRelatedTo( propertyName : String ) : IORMRelation
+		public function getRelatedTo(propertyName : String) : IORMRelation
 		{
 			return _relatedTo.get(propertyName) as IORMRelation;
 		}
@@ -365,15 +444,15 @@ package com.huafu.sql.orm
 		 * @param relationClass If specified, it'll look for a relation having strictly the given class
 		 * @return Returns the desired relation or null if no such defined
 		 */
-		public function getRelationTo( toWhat : ORMDescriptor, toWhatColumnName : String = null, relationClass : Class
-									   = null ) : IORMRelation
+		public function getRelationTo(toWhat : ORMDescriptor, toWhatColumnName : String = null, relationClass : Class
+				= null) : IORMRelation
 		{
 			var rel : IORMRelation;
 			for each (rel in _relatedTo)
 			{
 				if (rel.foreignDescriptor === toWhat && (!relationClass || ReflectionClass.isStrictly(rel,
-																									  relationClass))
-					&& (!toWhatColumnName || toWhatColumnName == rel.foreignColumnName))
+						relationClass))
+						&& (!toWhatColumnName || toWhatColumnName == rel.foreignColumnName))
 				{
 					return rel;
 				}
@@ -383,19 +462,40 @@ package com.huafu.sql.orm
 
 
 		/**
+		 * Get all the relation descriptors that are based on a local column which name is given
+		 *
+		 * @param localColumnName The name of the local column
+		 * @return The vector containing all relation descriptors for this column
+		 */
+		public function getRelationsBasedOnColumn(localColumnName : String) : Vector.<IORMRelation>
+		{
+			var res : Vector.<IORMRelation>;
+			if (_relationsPerColumn.hasOwnProperty(localColumnName))
+			{
+				res = _relationsPerColumn[localColumnName];
+			}
+			else
+			{
+				res = new Vector.<IORMRelation>();
+			}
+			return res;
+		}
+
+
+		/**
 		 * Get the SQL creation code of the table related to this model
 		 *
 		 * @param parametersDestination Used to bind the possible default values of the columns
 		 * @return The SQL code to create the table
 		 */
-		public function getSqlCreationCode( parametersDestination : SQLiteParameters = null ) : String
+		public function getSqlCreationCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var cols : Array = new Array(), prop : ORMPropertyDescriptor, rel : IORMRelation, res : String
-				= "CREATE TABLE \"" + tableName + "\"(", sql : String;
+					= "CREATE TABLE \"" + tableName + "\"(", sql : String;
 			if (!primaryKeyProperty)
 			{
 				throw new IllegalOperationError("You must define a primary key column to the table '"
-												+ tableName + "' (model '" + ormClassQName + "')");
+						+ tableName + "' (model '" + ormClassQName + "')");
 			}
 			cols.push(primaryKeyProperty.getSqlCode(parametersDestination));
 			for each (prop in _propertiesByName)
@@ -425,7 +525,7 @@ package com.huafu.sql.orm
 		{
 			if (!_globalOrmInstance)
 			{
-				_globalOrmInstance = factory();
+				_globalOrmInstance = new _ormClass();
 			}
 			return _globalOrmInstance;
 		}
@@ -437,6 +537,15 @@ package com.huafu.sql.orm
 		public function get ormClass() : Class
 		{
 			return _ormClass;
+		}
+
+
+		/**
+		 * The name of the class only, without the package information
+		 */
+		public function get ormClassName() : String
+		{
+			return _ormClassName;
 		}
 
 
@@ -464,7 +573,7 @@ package com.huafu.sql.orm
 		 * @param name The name of the property we want the descriptor of
 		 * @return The appropriate property descriptor
 		 */
-		public function propertyDescriptor( name : String ) : ORMPropertyDescriptor
+		public function propertyDescriptor(name : String) : ORMPropertyDescriptor
 		{
 			return _propertiesByName.get(name) as ORMPropertyDescriptor;
 		}
@@ -476,9 +585,44 @@ package com.huafu.sql.orm
 		 * @param name The name of the column corresponding to the property we want the decriptor of
 		 * @return The descriptor of the proerty
 		 */
-		public function propertyDescriptorByColumnName( name : String ) : ORMPropertyDescriptor
+		public function propertyDescriptorByColumnName(name : String) : ORMPropertyDescriptor
 		{
 			return _propertiesByColumnName.get(name) as ORMPropertyDescriptor;
+		}
+
+
+		/**
+		 * Get all properties defined in an array
+		 *
+		 * @return All properties in an array
+		 */
+		public function get propertyDescriptors() : Array
+		{
+			return _propertiesByName.toArray();
+		}
+
+
+		/**
+		 * Get all relations defined in an array
+		 *
+		 * @return All relations in an array
+		 */
+		public function get relationDescriptors() : Array
+		{
+			return _relatedTo.toArray();
+		}
+
+
+		/**
+		 * The names of the properties that are in fact foreign objects
+		 */
+		public function get relationsPropertyNames() : Array
+		{
+			if (!_relationsPropertyNames)
+			{
+				_relationsPropertyNames = _relatedTo.keys();
+			}
+			return _relationsPropertyNames;
 		}
 
 
@@ -490,7 +634,7 @@ package com.huafu.sql.orm
 		 * @param object The ORM object to load results in
 		 * @param dataObject The data object of the ORM object
 		 */
-		public function sqlResultRowToOrmObject( result : Object, object : ORM, dataObject : Object ) : void
+		public function sqlResultRowToOrmObject(result : Object, object : ORM, dataObject : Object) : void
 		{
 			var prop : ORMPropertyDescriptor, relation : IORMRelation;
 			// load normal properties
@@ -508,7 +652,8 @@ package com.huafu.sql.orm
 			// prepare for relation properties
 			for each (relation in _relatedTo)
 			{
-				relation.setupOrmObject(object, dataObject, result);
+				//relation.setupOrmObject(object, dataObject, result);
+				dataObject[relation.ownerPropertyName] = null;
 			}
 		}
 
@@ -527,7 +672,7 @@ package com.huafu.sql.orm
 		 */
 		public function updateSchema() : void
 		{
-			var stmt : SQLiteStatement, schema : SQLTableSchema, params : SQLiteParameters;
+			var stmt : SQLiteStatement, schema : SQLTableSchema, params : SQLiteParameters, col : SQLColumnSchema;
 			if ((schema = connection.getTableSchema(tableName)))
 			{
 				// the table exists, check if the schema is the same
@@ -541,6 +686,14 @@ package com.huafu.sql.orm
 				stmt = connection.createStatement(getSqlCreationCode(params), true);
 				params.softBindTo(stmt);
 				stmt.safeExecute();
+				schema = connection.getTableSchema(tableName);
+			}
+
+			// grab the name of all columns
+			_allColumnNames = new Array();
+			for each (col in schema.columns)
+			{
+				_allColumnNames.push(col.name);
 			}
 		}
 

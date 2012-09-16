@@ -41,7 +41,9 @@ package com.huafu.common
 	public final class Huafu
 	{
 		protected static var _consoleLogTarget : TraceTarget = null;
-		protected static var _loggingToConsole : Boolean     = false;
+
+
+		protected static var _loggingToConsole : Boolean = false;
 
 
 		/**
@@ -49,7 +51,7 @@ package com.huafu.common
 		 *
 		 * @param theClass The class to get the logger of
 		 */
-		public static function getLoggerFor( theClass : Class ) : ILogger
+		public static function getLoggerFor(theClass : Class) : ILogger
 		{
 			var name : String = getQualifiedClassName(theClass).replace("::", ".");
 			return Log.getLogger(name);
@@ -65,7 +67,7 @@ package com.huafu.common
 		/**
 		 * Whether the trace is enabled or not
 		 */
-		public static function set traceEnabled( value : Boolean ) : void
+		public static function set traceEnabled(value : Boolean) : void
 		{
 			if (value == _loggingToConsole)
 			{
@@ -74,7 +76,7 @@ package com.huafu.common
 			if (!_consoleLogTarget)
 			{
 				_consoleLogTarget = new TraceTarget();
-				_consoleLogTarget.filters = [ "mx.rpc.*", "mx.messaging.*", "com.huafu.*" ];
+				_consoleLogTarget.filters = ["mx.rpc.*", "mx.messaging.*", "com.huafu.*"];
 				_consoleLogTarget.level = LogEventLevel.ALL;
 				_consoleLogTarget.includeCategory = true;
 				_consoleLogTarget.includeDate = true;

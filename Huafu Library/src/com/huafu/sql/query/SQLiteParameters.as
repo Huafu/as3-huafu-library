@@ -44,17 +44,20 @@ package com.huafu.sql.query
 		 * Creates a new parameter object
 		 * @see #bind
 		 */
-		public function SQLiteParameters( ... parameters : Array )
+		public function SQLiteParameters(... parameters : Array)
 		{
 			super();
 			removeAll();
 			bind.apply(this, parameters);
 		}
 
+
 		/**
 		 * The name indexed parameters
 		 */
 		internal var namedParams : Object;
+
+
 		/**
 		 * The 0 based indexed parameters
 		 */
@@ -69,7 +72,7 @@ package com.huafu.sql.query
 		 * @return Returns this object to do chained calls
 		 * @se #bindOne
 		 */
-		public function bind( ... parameters : Array ) : SQLiteParameters
+		public function bind(... parameters : Array) : SQLiteParameters
 		{
 			var param : *;
 			for each (param in parameters)
@@ -89,7 +92,7 @@ package com.huafu.sql.query
 		 * @param value The value of the parameter if the first argument is a string and so its name
 		 * @return Returns this object to do chained calls
 		 */
-		public function bindOne( objectOrNameOrValue : *, value : * = null ) : SQLiteParameters
+		public function bindOne(objectOrNameOrValue : *, value : * = null) : SQLiteParameters
 		{
 			var name : String;
 			if (arguments.length == 2)
@@ -123,7 +126,7 @@ package com.huafu.sql.query
 		 *
 		 * @param statement The statement on which to bin all parameters
 		 */
-		public function bindTo( statement : SQLStatement ) : void
+		public function bindTo(statement : SQLStatement) : void
 		{
 			var name : String, i : int;
 			for (name in namedParams)
@@ -155,10 +158,10 @@ package com.huafu.sql.query
 		 *
 		 * @param statement The statement on which to bin all parameters
 		 */
-		public function softBindTo( statement : SQLiteStatement ) : void
+		public function softBindTo(statement : SQLiteStatement) : void
 		{
 			var name : String, i : int, castSql : String, oldSql : String, cols : Array = new Array(),
-				v : int = 0, data : Object, val : String, quotes : RegExp = /\'/g;
+					v : int = 0, data : Object, val : String, quotes : RegExp = /\'/g;
 			if (statement.isCached)
 			{
 				throw new IllegalOperationError("You cannot bind softly a cached statement");
@@ -185,7 +188,7 @@ package com.huafu.sql.query
 			data = statement.getResult().data[0];
 			v = 0;
 			i = 0;
-			oldSql = oldSql.replace(/\?/g, function( text : String, ... dummy : Array ) : String
+			oldSql = oldSql.replace(/\?/g, function(text : String, ... dummy : Array) : String
 			{
 				val = data["v" + (v++)];
 				if (val === null)

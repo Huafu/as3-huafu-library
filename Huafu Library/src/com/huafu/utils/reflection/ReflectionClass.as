@@ -50,10 +50,10 @@ package com.huafu.utils.reflection
 		 * @param theClass The class to get reflection of
 		 * @return The relfection class object
 		 */
-		public static function forClass( theClass : Class ) : ReflectionClass
+		public static function forClass(theClass : Class) : ReflectionClass
 		{
 			var className : String = getClassQName(theClass), res : ReflectionClass = _allByClassQName.
-				get(className);
+					get(className);
 			if (!res)
 			{
 				res = new ReflectionClass(getDefinitionByName(className) as Class);
@@ -69,10 +69,10 @@ package com.huafu.utils.reflection
 		 * @param The object ot get the reflection class object of it's class
 		 * @return The reflection class object for the class of the given object
 		 */
-		public static function forClassOfObject( object : * ) : ReflectionClass
+		public static function forClassOfObject(object : *) : ReflectionClass
 		{
 			var className : String = getQualifiedClassName(object), res : ReflectionClass = _allByClassQName.
-				get(className);
+					get(className);
 			if (!res)
 			{
 				res = new ReflectionClass(getDefinitionByName(className) as Class);
@@ -88,9 +88,22 @@ package com.huafu.utils.reflection
 		 * @param theClass The class to get the QName of
 		 * @return The QName of the given class
 		 */
-		public static function getClassQName( theClass : Class ) : String
+		public static function getClassQName(theClass : Class) : String
 		{
 			return getQualifiedClassName(theClass);
+		}
+
+
+		/**
+		 * Finds whether a given class is inheriting a given interface or class
+		 *
+		 * @param theClass The class to test
+		 * @param classOrInterface The class or interface we want to know if theClass is inherited from or not
+		 * @return Returns true if theClass inherits or implements the given class/interface
+		 */
+		public static function isClassInheriting(theClass : Class, classOrInterface : Object) : Boolean
+		{
+			return forClass(theClass).isInheriting(classOrInterface);
 		}
 
 
@@ -102,7 +115,7 @@ package com.huafu.utils.reflection
 		 * @param classToTest The class the object has to be of
 		 * @return Returns true if the object is an instance of the given class, else false
 		 */
-		public static function isStrictly( objectToTest : *, classToTest : Class ) : Boolean
+		public static function isStrictly(objectToTest : *, classToTest : Class) : Boolean
 		{
 			return (objectToTest is classToTest) && (getQualifiedClassName(objectToTest) == getQualifiedClassName(classToTest));
 		}
@@ -113,7 +126,7 @@ package com.huafu.utils.reflection
 		 *
 		 * @param theClass The class to get reflection of
 		 */
-		public function ReflectionClass( theClass : Class )
+		public function ReflectionClass(theClass : Class)
 		{
 			var s : Boolean = XML.ignoreWhitespace;
 			XML.ignoreWhitespace = true;
@@ -126,31 +139,49 @@ package com.huafu.utils.reflection
 			_allPropertiesLoaded = false;
 		}
 
+
+		private var _allImplementedInterfaces : Array;
+
+
+		private var _allInheritedClasses : Array;
+
+
 		/**
 		 * All properties
 		 */
 		private var _allProperties : Array;
+
+
 		/**
 		 * Whether all properties have been loaded already or not
 		 */
 		private var _allPropertiesLoaded : Boolean;
 
+
 		/**
 		 * Pointer to the class
 		 */
 		private var _class : Class;
+
+
 		/**
 		 * The name of the class
 		 */
 		private var _className : String;
+
+
 		/**
 		 * The qname of the class
 		 */
 		private var _classQName : String;
+
+
 		/**
 		 * The properties indexed by their name
 		 */
 		private var _properties : HashMap;
+
+
 		/**
 		 * The cached XML nodes for each property
 		 */
@@ -178,7 +209,7 @@ package com.huafu.utils.reflection
 			if (!_classQName)
 			{
 				_classQName = xmlDescription.localName() == "factory" ? xmlDescription.@type.toString()
-					: xmlDescription.@name.toString();
+						: xmlDescription.@name.toString();
 			}
 			return _classQName;
 		}
@@ -194,13 +225,37 @@ package com.huafu.utils.reflection
 
 
 		/**
+		 * Finds whether the reflected class is inheriting the given class or interface
+		 *
+		 * @param classOrInterface A pointer to a class or interface to test if the reflected class is derived from
+		 * @return Returns true if if inheriting the given class/interface, else fals
+		 */
+		public function isInheriting(classOrInterface : Object) : Boolean
+		{
+			var x : XML, qName : String = getQualifiedClassName(classOrInterface);
+			if (!_allInheritedClasses)
+			{
+				_allInheritedClasses = new Array();
+				_allImplementedInterfaces = new Array();
+				for each (x in xmlDescription.implementsInterface)
+				{
+					_allImplementedInterfaces.push(x.@type.toString());
+				}
+					// TODO: fill the _allInheritedClasses array too!
+			}
+			return (_allInheritedClasses.indexOf(qName) != -1) || (_allImplementedInterfaces.indexOf(qName)
+					!= -1);
+		}
+
+
+		/**
 		 * Get all properties of the reflected class
 		 *
 		 * @param includeVariables If true, the variables are included in the resulting array
 		 * @param includeAccessors If true, all accessors are incuded in the resulting array
 		 * @return An array containing all accessors and/or variables
 		 */
-		public function properties( includeVariables : Boolean = true, includeAccessors : Boolean = true ) : Array
+		public function properties(includeVariables : Boolean = true, includeAccessors : Boolean = true) : Array
 		{
 			var x : XML, p : ReflectionProperty, name : String, res : Array;
 			if (!_allPropertiesLoaded)
@@ -225,7 +280,7 @@ package com.huafu.utils.reflection
 			for each (p in _allProperties)
 			{
 				if ((p.propertyType == ReflectionProperty.TYPE_ACCESSOR && includeAccessors) || (p.propertyType
-					== ReflectionProperty.TYPE_VARIABLE && includeVariables))
+						== ReflectionProperty.TYPE_VARIABLE && includeVariables))
 				{
 					res.push(p);
 				}
@@ -240,7 +295,7 @@ package com.huafu.utils.reflection
 		 * @param name The name of the property to get
 		 * @return The reflection of the given property
 		 */
-		public function property( name : String ) : ReflectionProperty
+		public function property(name : String) : ReflectionProperty
 		{
 			var res : ReflectionProperty = _properties.get(name), x : XML;
 			if (!res && !_properties.exists(name))
@@ -264,7 +319,7 @@ package com.huafu.utils.reflection
 		 * @param name The name of the property to get
 		 * @return The XML node corresponding to the property
 		 */
-		public function propertyXml( name : String ) : XML
+		public function propertyXml(name : String) : XML
 		{
 			var prop : XML = _propertyXmls.get(name), n : String = name;
 			if (!prop && !_propertyXmls.exists(name))

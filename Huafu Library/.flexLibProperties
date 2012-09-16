@@ -4,12 +4,10 @@
     <classEntry path="com.huafu.sql.SQLiteConnection"/>
     <classEntry path="com.huafu.sql.SQLiteStatement"/>
     <classEntry path="com.huafu.sql.orm.ISchemaTranslation"/>
-    <classEntry path="com.huafu.sql.orm.ORM"/>
     <classEntry path="com.huafu.sql.orm.ORMDescriptor"/>
     <classEntry path="com.huafu.sql.orm.ORMPropertyDescriptor"/>
     <classEntry path="com.huafu.utils.HashMap"/>
     <classEntry path="com.huafu.sql.orm.ORMEvent"/>
-    <classEntry path="com.huafu.sql.orm.ORMIterator"/>
     <classEntry path="com.huafu.utils.reflection.ReflectionClass"/>
     <classEntry path="com.huafu.utils.reflection.ReflectionMetadata"/>
     <classEntry path="com.huafu.utils.reflection.ReflectionBase"/>
@@ -31,6 +29,12 @@
     <classEntry path="com.huafu.common.Huafu"/>
     <classEntry path="com.huafu.utils.RegExpUtil"/>
     <classEntry path="com.huafu.utils.DateUtil"/>
+    <classEntry path="com.huafu.sql.orm.iterator.ORMRelationIterator"/>
+    <classEntry path="com.huafu.sql.orm.iterator.ORMIterator"/>
+    <classEntry path="dbal.QueryBuilder"/>
+    <classEntry path="dbal.ExpressionBuilder"/>
+    <classEntry path="com.huafu.sql.orm.ORM"/>
+    <classEntry path="com.huafu.sql.orm.iterator.IORMIterator"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

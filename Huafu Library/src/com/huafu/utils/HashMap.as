@@ -30,7 +30,6 @@ package com.huafu.utils
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
 	import mx.collections.ArrayList;
-	import mx.utils.ArrayUtil;
 
 
 	/**
@@ -46,7 +45,7 @@ package com.huafu.utils
 		 *
 		 * @param initialData An optional object to get value(s) from
 		 */
-		public function HashMap( initialData : Object = null )
+		public function HashMap(initialData : Object = null)
 		{
 			var key : String;
 
@@ -65,10 +64,13 @@ package com.huafu.utils
 			}
 		}
 
+
 		/**
 		 * All data of this object
 		 */
 		private var _data : Object;
+
+
 		/**
 		 * All keys of this object
 		 */
@@ -81,7 +83,7 @@ package com.huafu.utils
 		 * @param name The name of the property to test existence
 		 * @return Returns true if the proeprty exists, else false
 		 */
-		public function exists( name : String ) : Boolean
+		public function exists(name : String) : Boolean
 		{
 			return (_keyIndex(name) != -1);
 		}
@@ -94,7 +96,7 @@ package com.huafu.utils
 		 * @param ifUndefined The value returned if the proeprty isn't defined
 		 * @return The value of the property
 		 */
-		public function get( name : String, ifUndefined : * = null ) : *
+		public function get(name : String, ifUndefined : * = null) : *
 		{
 			if (_keyIndex(name) == -1)
 			{
@@ -122,7 +124,7 @@ package com.huafu.utils
 		 * @param value The value of the property
 		 * @return Returns this object to do chained calls
 		 */
-		public function set( name : String, value : * ) : HashMap
+		public function set(name : String, value : *) : HashMap
 		{
 			_set(name, value, (_keyIndex(name) == -1));
 			return this;
@@ -168,7 +170,7 @@ package com.huafu.utils
 		 * @return Returns true if this proeprty existed and has been removed
 		 * else returns false
 		 */
-		public function unset( name : String ) : Boolean
+		public function unset(name : String) : Boolean
 		{
 			var index : int;
 			if ((index = _keyIndex(name)) != -1)
@@ -184,7 +186,7 @@ package com.huafu.utils
 		/**
 		 * @copy #unset
 		 */
-		flash_proxy override function deleteProperty( name : * ) : Boolean
+		flash_proxy override function deleteProperty(name : *) : Boolean
 		{
 			return unset(name);
 		}
@@ -193,7 +195,7 @@ package com.huafu.utils
 		/**
 		 * @copy #get
 		 */
-		flash_proxy override function getProperty( name : * ) : *
+		flash_proxy override function getProperty(name : *) : *
 		{
 			return get(name);
 		}
@@ -202,19 +204,19 @@ package com.huafu.utils
 		/**
 		 * @copy #exists
 		 */
-		flash_proxy override function hasProperty( name : * ) : Boolean
+		flash_proxy override function hasProperty(name : *) : Boolean
 		{
 			return exists(name);
 		}
 
 
-		flash_proxy override function nextName( index : int ) : String
+		flash_proxy override function nextName(index : int) : String
 		{
 			return _keys.getItemAt(index - 1) as String;
 		}
 
 
-		flash_proxy override function nextNameIndex( index : int ) : int
+		flash_proxy override function nextNameIndex(index : int) : int
 		{
 			if (index >= _keys.length)
 			{
@@ -224,7 +226,7 @@ package com.huafu.utils
 		}
 
 
-		flash_proxy override function nextValue( index : int ) : *
+		flash_proxy override function nextValue(index : int) : *
 		{
 			return _data[_keys.getItemAt(index - 1)];
 		}
@@ -233,7 +235,7 @@ package com.huafu.utils
 		/**
 		 * @copy #set
 		 */
-		flash_proxy override function setProperty( name : *, value : * ) : void
+		flash_proxy override function setProperty(name : *, value : *) : void
 		{
 			set(name, value);
 		}
@@ -245,7 +247,7 @@ package com.huafu.utils
 		 * @param name The name of the key to get the index of
 		 * @return The index of that key or -1 if no such index
 		 */
-		private function _keyIndex( name : String ) : int
+		private function _keyIndex(name : String) : int
 		{
 			return _keys.getItemIndex(name);
 		}
@@ -258,7 +260,7 @@ package com.huafu.utils
 		 * @param value The value of the property
 		 * @param addNameToKeys If true, will add the name of the property to the list of keys
 		 */
-		private function _set( name : String, value : *, addNameToKeys : Boolean = true ) : void
+		private function _set(name : String, value : *, addNameToKeys : Boolean = true) : void
 		{
 			_data[name] = value;
 			if (addNameToKeys)

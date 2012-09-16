@@ -53,7 +53,7 @@ package com.huafu.sql
 		 *
 		 * @param cached Used internally
 		 */
-		public function SQLiteStatement( text : String = null, cached : Boolean = false )
+		public function SQLiteStatement(text : String = null, cached : Boolean = false)
 		{
 			super();
 			if (cached && !_creatingStatement)
@@ -70,15 +70,19 @@ package com.huafu.sql
 			addEventListener(SQLErrorEvent.ERROR, _sqlErrorHandler);
 		}
 
+
 		/**
 		 * Stores whether the statement is cached or not
 		 */
 		private var _cached : Boolean;
 
+
 		/**
 		 * Stores the last error that occurres or null if the last execute call doesn't throw any error
 		 */
 		private var _lastError : SQLError;
+
+
 		private var _logger : ILogger;
 
 
@@ -91,7 +95,7 @@ package com.huafu.sql
 		 * @param value Value of the parameter to bind
 		 * @return Returns this object to do chained calls
 		 */
-		public function bind( nameOrObject : *, value : * = null ) : SQLiteStatement
+		public function bind(nameOrObject : *, value : * = null) : SQLiteStatement
 		{
 			var name : String;
 			if (arguments.length == 2)
@@ -113,7 +117,7 @@ package com.huafu.sql
 		 * Execute the statement, opening the connection if this one isn't opened yet
 		 * @inheritDoc
 		 */
-		public override function execute( prefetch : int = -1, responder : Responder = null ) : void
+		override public function execute(prefetch : int = -1, responder : Responder = null) : void
 		{
 			_lastError = null;
 			(sqlConnection as SQLiteConnection).autoOpen();
@@ -148,8 +152,8 @@ package com.huafu.sql
 		 * @return If no error, returns true, else returns false
 		 * @see #execute
 		 */
-		public function safeExecute( throwError : Boolean = true, prefetch : int = -1, responder : Responder
-									 = null ) : Boolean
+		public function safeExecute(throwError : Boolean = true, prefetch : int = -1, responder : Responder
+				= null) : Boolean
 		{
 			execute(prefetch, responder);
 			if (throwError && _lastError)
@@ -164,7 +168,7 @@ package com.huafu.sql
 		 * SQL code of the query
 		 * @inheritDoc
 		 */
-		public override function set text( value : String ) : void
+		override public function set text(value : String) : void
 		{
 			if (_cached)
 			{
@@ -179,7 +183,7 @@ package com.huafu.sql
 		 *
 		 * @param event The event triggered
 		 */
-		private function _sqlErrorHandler( event : SQLErrorEvent ) : void
+		private function _sqlErrorHandler(event : SQLErrorEvent) : void
 		{
 			_lastError = event.error;
 		}

@@ -43,20 +43,25 @@ package com.huafu.utils.reflection
 		 *
 		 * @param xmlNode The node describing this reflection object
 		 */
-		public function ReflectionBase( xmlNode : XML )
+		public function ReflectionBase(xmlNode : XML)
 		{
 			_xml = xmlNode;
 			_uniqueMetadatas = new HashMap();
 		}
 
+
 		/**
 		 * Stores all metadata of this object
 		 */
 		private var _allMetadatas : Array;
+
+
 		/**
 		 * Stores all metadata which are unique by name
 		 */
 		private var _uniqueMetadatas : HashMap;
+
+
 		/**
 		 * Stores the XML node relted to this reflection object
 		 */
@@ -69,7 +74,7 @@ package com.huafu.utils.reflection
 		 * @param name The name of the metadata
 		 * @return Returns true if the metadata with given name exists, else false
 		 */
-		public function hasMetadata( name : String ) : Boolean
+		public function hasMetadata(name : String) : Boolean
 		{
 			return (metadataByName(name)..length() > 0);
 		}
@@ -81,7 +86,7 @@ package com.huafu.utils.reflection
 		 * @param name The name of the metadatas to get
 		 * @return The XMLList of all metadatas with the given name
 		 */
-		public function metadataByName( name : String ) : XMLList
+		public function metadataByName(name : String) : XMLList
 		{
 			var s : String = name;
 			return xmlDescription.metadata.(@name == s);
@@ -96,10 +101,10 @@ package com.huafu.utils.reflection
 		 * @param value The value of the argument which key is the one given in key parameter
 		 * @return The XML node of the metadata or null
 		 */
-		public function metadataByNameAndKeyValue( name : String, key : String, value : String ) : XML
+		public function metadataByNameAndKeyValue(name : String, key : String, value : String) : XML
 		{
 			var n : String = name, k : String = key, v : String = value, x : XML = xmlDescription.metadata.
-				(@name == n).arg.(@key == k && @value == v)[0];
+					(@name == n).arg.(@key == k && @value == v)[0];
 			if (x)
 			{
 				return x.parent();
@@ -132,7 +137,7 @@ package com.huafu.utils.reflection
 		 * @param name The name of the unique metadata to get
 		 * @return The reflection metadata object or null if no such metadata
 		 */
-		public function uniqueMetadata( name : String ) : ReflectionMetadata
+		public function uniqueMetadata(name : String) : ReflectionMetadata
 		{
 			var res : ReflectionMetadata = _uniqueMetadatas.get(name), x : XML, s : String = name;
 			if (!res && !_uniqueMetadatas.exists(name))

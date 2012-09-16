@@ -39,6 +39,8 @@ package com.huafu.utils.reflection
 		 * Type of property : accessor
 		 */
 		public static const TYPE_ACCESSOR : String = "accessor";
+
+
 		/**
 		 * Type of property : variable
 		 */
@@ -51,7 +53,7 @@ package com.huafu.utils.reflection
 		 * @param owner The relfection class owning the property
 		 * @param xmlNode The XML node describing the proeprty
 		 */
-		public function ReflectionProperty( owner : ReflectionClass, xmlNode : XML )
+		public function ReflectionProperty(owner : ReflectionClass, xmlNode : XML)
 		{
 			super(xmlNode);
 			_name = xmlNode.@name.toString();
@@ -60,10 +62,13 @@ package com.huafu.utils.reflection
 			_owner = owner;
 		}
 
+
 		/**
 		 * The data type QName of the property
 		 */
 		private var _dataType : String;
+
+
 		/**
 		 * The name of the property
 		 */
@@ -74,6 +79,8 @@ package com.huafu.utils.reflection
 		 * The class owning the property
 		 */
 		private var _owner : ReflectionClass;
+
+
 		/**
 		 * The type of the property (accessor or variable)
 		 * @see #TYPE_ACCESSOR

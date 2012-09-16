@@ -34,10 +34,16 @@ package com.huafu.sql.query
 	 */
 	public class SQLiteConditionGroup
 	{
-		public static const AND : String     = "AND";
+		public static const AND : String = "AND";
+
+
 		public static const AND_NOT : String = "AND NOT";
-		public static const OR : String      = "OR";
-		public static const OR_NOT : String  = "OR NOT";
+
+
+		public static const OR : String = "OR";
+
+
+		public static const OR_NOT : String = "OR NOT";
 
 
 		/**
@@ -45,16 +51,18 @@ package com.huafu.sql.query
 		 *
 		 * @param owner The owner if this is a sub-block
 		 */
-		public function SQLiteConditionGroup( owner : SQLiteConditionGroup = null )
+		public function SQLiteConditionGroup(owner : SQLiteConditionGroup = null)
 		{
 			reset();
 			_owner = owner;
 		}
 
+
 		/**
 		 * Stores all conditions and logic operators
 		 */
 		internal var list : Array;
+
 
 		/**
 		 * The owner of this group if it's in another block (for parentheses)
@@ -69,7 +77,7 @@ package com.huafu.sql.query
 		 * @param logicOperator The logic operator if this is not the first condition
 		 * @return Returns this object to do chained calls
 		 */
-		public function add( condition : *, logicOperator : String = AND ) : SQLiteConditionGroup
+		public function add(condition : *, logicOperator : String = AND) : SQLiteConditionGroup
 		{
 			if (list.length > 0)
 			{
@@ -129,7 +137,7 @@ package com.huafu.sql.query
 		 * @param parametersDestination The SQLiteParameters object where to bind parameters to
 		 * @return The SQL code
 		 */
-		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
+		public function sqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var item : *, i : int, res : String = "";
 			if (list.length < 1)

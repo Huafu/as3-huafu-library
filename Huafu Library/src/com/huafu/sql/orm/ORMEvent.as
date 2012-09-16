@@ -38,27 +38,37 @@ package com.huafu.sql.orm
 		/**
 		 * Fired when an ORM object has been deleted successfully
 		 */
-		public static const DELETED : String         = "deleted";
+		public static const DELETED : String = "deleted";
+
+
 		/**
 		 * Fired before deleting an ORM object
 		 */
-		public static const DELETING : String        = "deleting";
+		public static const DELETING : String = "deleting";
+
+
 		/**
 		 * Fired when the ORM object has been loaded successfully
 		 */
-		public static const LOADED : String          = "loaded";
+		public static const LOADED : String = "loaded";
+
+
 		/**
 		 * Fired when a proeprty is updated
 		 */
 		public static const PROPERTY_UPDATE : String = "propertyUpdate";
+
+
 		/**
 		 * Fired when an ORM object has been saved correctly
 		 */
-		public static const SAVED : String           = "saved";
+		public static const SAVED : String = "saved";
+
+
 		/**
 		 * Fired before the ORM object begin to be saved
 		 */
-		public static const SAVING : String          = "saving";
+		public static const SAVING : String = "saving";
 
 
 		/**
@@ -68,9 +78,9 @@ package com.huafu.sql.orm
 		 * @param property The description of the ORM property that has been updated
 		 * @param deletedId The ID of the ORM object that has been deleted
 		 */
-		public function ORMEvent( type : String, propertyName : String = null, deletedId : int = undefined )
+		public function ORMEvent(type : String, propertyName : String = null, deletedId : int = undefined)
 		{
-			super(type, false, (type in [ PROPERTY_UPDATE, SAVING, DELETING ]));
+			super(type, false, (type in [PROPERTY_UPDATE, SAVING, DELETING]));
 			if (type == PROPERTY_UPDATE)
 			{
 				_propertyName = propertyName;
@@ -81,6 +91,7 @@ package com.huafu.sql.orm
 			}
 		}
 
+
 		/**
 		 * Stores the ID of the ORM object that has been deleted
 		 */
@@ -90,7 +101,7 @@ package com.huafu.sql.orm
 		/**
 		 * Stores the name of the property that has been updated
 		 */
-		private var _propertyName : String           = null;
+		private var _propertyName : String = null;
 
 
 		/**

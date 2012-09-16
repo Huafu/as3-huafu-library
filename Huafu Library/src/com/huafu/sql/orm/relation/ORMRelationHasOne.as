@@ -31,8 +31,10 @@ package com.huafu.sql.orm.relation
 	import com.huafu.sql.orm.ORMDescriptor;
 	import com.huafu.sql.orm.ORMPropertyDescriptor;
 	import com.huafu.sql.query.SQLiteParameters;
+	import com.huafu.sql.query.SQLiteQuery;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
+	import flash.errors.IllegalOperationError;
 
 
 	/**
@@ -44,8 +46,8 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy ORMRelation#ORMRelation()
 		 */
-		public function ORMRelationHasOne( ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
-										   metadata : ReflectionMetadata )
+		public function ORMRelationHasOne(ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
+				metadata : ReflectionMetadata)
 		{
 			super(ownerDescriptor, property, metadata);
 			_foreignIsUnique = true;
@@ -55,13 +57,29 @@ package com.huafu.sql.orm.relation
 			_foreignOrmClass = property.dataTypeClass;
 		}
 
+
 		protected var _nullable : Boolean;
+
+
+		/**
+		 * @copy IORMRelation#addForeignItem()
+		 */
+		public function addForeignItem(ownerOrmObject : ORM, item : ORM, saveAdditionalRelatedDataIn : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			if (replaceForeignItem(ownerOrmObject, null, null, item, {}, throwError))
+			{
+				ownerOrmObject[ownerPropertyName] = item;
+				return true;
+			}
+			return false;
+		}
 
 
 		/**
 		 * @copy IORMRelation#foreignColumnName
 		 */
-		public override function get foreignColumnName() : String
+		override public function get foreignColumnName() : String
 		{
 			if (!_foreignColumnName)
 			{
@@ -74,7 +92,7 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#getLocalColumnSqlCode()
 		 */
-		public override function getLocalColumnSqlCode( parametersDestination : SQLiteParameters = null ) : String
+		override public function getLocalColumnSqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			var p : ORMPropertyDescriptor;
 			if (!_localColumnSqlCode)
@@ -107,7 +125,7 @@ package com.huafu.sql.orm.relation
 		/**
 		 * @copy IORMRelation#localColumnName
 		 */
-		public override function get localColumnName() : String
+		override public function get localColumnName() : String
 		{
 			if (!_localColumnName)
 			{
@@ -118,24 +136,71 @@ package com.huafu.sql.orm.relation
 
 
 		/**
+		 * @copy IORMRelation#removeAllForeignItem()
+		 */
+		public function removeAllForeignItems(ownerOrmObject : ORM, throwError : Boolean = true) : Boolean
+		{
+			ownerOrmObject[ownerPropertyName] = null;
+			return true;
+		}
+
+
+		/**
+		 * @copy IORMRelation#removeForeignItem()
+		 */
+		public function removeForeignItem(ownerOrmObject : ORM, item : ORM, additionalRelatedData : Object,
+				throwError : Boolean = true) : Boolean
+		{
+			throw new IllegalOperationError("Trying to remove a foreign item when the relation is unique and not multiple");
+			return false;
+		}
+
+
+		/**
+		 * @copy IORMRelation#replaceForeignItem()
+		 */
+		public function replaceForeignItem(ownerOrmObject : ORM, oldItem : ORM, oldAdditionalRelatedData : Object,
+				newItem : ORM, saveNewItemAdditionalRelatedDataIn : Object, throwError : Boolean
+				= true) : Boolean
+		{
+			var q : SQLiteQuery, pkName : String;
+			if (!(checkForeignItemClass(newItem, throwError) && checkOwnerObjectClass(ownerOrmObject,
+					throwError) && checkIfFromDb(newItem, throwError)))
+			{
+				return false;
+			}
+			pkName = ownerDescriptor.primaryKeyProperty.columnName;
+			q = ownerOrmObject.getQuery(true, false)
+					.update(ownerDescriptor.tableName)
+					.set(localColumnName, newItem.getColumnValue(foreignColumnName))
+					.where(pkName + " = " + q.bind(pkName, ownerOrmObject.primaryKeyValue));
+			if (!q.execute().rowsAffected > 0)
+			{
+				return false;
+			}
+			ownerOrmObject[ownerPropertyName] = newItem;
+			return true;
+		}
+
+
+		/**
 		 * @copy IORMRelation#setupOrmObject()
 		 */
-		public function setupOrmObject( ormObject : ORM, ormObjectData : Object, usingData : Object ) : void
+		public function setupOrmObject(ormObject : ORM, ormObjectData : Object, usingData : Object) : void
 		{
-			var res : ORM = ormObjectData[ownerPropertyName] || null;
+			var res : ORM = null;
 			if (!usingData || !usingData[localColumnName])
 			{
 				ormObjectData[ownerPropertyName] = null;
 				return;
 			}
-			if (!res)
+			res = new foreignOrmClass();
+			res.excludeSoftDeletedRecords = ormObject.excludeSoftDeletedRecords;
+			if (res.load(usingData[localColumnName]))
 			{
-				res = new foreignOrmClass();
 				ormObjectData[ownerPropertyName] = res;
 			}
-			res.excludeSoftDeleted = ormObject.excludeSoftDeleted;
-			res.find(usingData[localColumnName]);
-			if (!res.isLoaded)
+			else
 			{
 				ormObjectData[ownerPropertyName] = null;
 			}

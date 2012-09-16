@@ -44,7 +44,7 @@ package com.huafu.sql.query
 		 * in which case this object is just returned
 		 * @return The SQLiteCondition object
 		 */
-		public static function cast( arrayOrCondition : * ) : SQLiteCondition
+		public static function cast(arrayOrCondition : *) : SQLiteCondition
 		{
 			if (arrayOrCondition is SQLiteCondition)
 			{
@@ -65,16 +65,19 @@ package com.huafu.sql.query
 		 * @param parameters Each more parameter given to the constructor will be
 		 * treated as a bind parameter required for this condition
 		 */
-		public function SQLiteCondition( conditionString : String, ... parameters : Array )
+		public function SQLiteCondition(conditionString : String, ... parameters : Array)
 		{
 			this.conditionString = conditionString;
 			this.parameters = parameters;
 		}
 
+
 		/**
 		 * Stores the condition string
 		 */
 		internal var conditionString : String;
+
+
 		/**
 		 * Stores all parameters
 		 */
@@ -88,7 +91,7 @@ package com.huafu.sql.query
 		 * @param parametersDestination Where to bind the parameters if any
 		 * @return The SQL code of the condition
 		 */
-		public function sqlCode( parametersDestination : SQLiteParameters = null ) : String
+		public function sqlCode(parametersDestination : SQLiteParameters = null) : String
 		{
 			if (parametersDestination)
 			{
