@@ -82,7 +82,7 @@ package com.huafu.sql.orm.relation
 			relationType = property.xmlDescription.metadata.(@name == "HasOne" || @name == "HasMany"
 					|| @name == "BelongsTo")[0].@name.toString();
 			metadata = property.uniqueMetadata(relationType);
-			if (metadata.hasArgument("usingClass"))
+			if (metadata.hasArgument("localToBridge"))
 			{
 				relClass = ORMRelationBridge;
 			}
@@ -137,6 +137,7 @@ package com.huafu.sql.orm.relation
 			_destinationOrmDescriptor = ownerDescriptor;
 			_destinationOrmPropertyName = property.name;
 			_foreignIsUnique = false;
+			_inverseByPropertyName = metadata.argValueString("inverseBy");
 			logger.debug("Creating a new ORM relation descriptor of type '" + getQualifiedClassName(this)
 					+ "' for ORM class '" + ownerDescriptor.ormClassQName + "'");
 		}
@@ -167,6 +168,9 @@ package com.huafu.sql.orm.relation
 
 
 		protected var _foreignRelation : IORMRelation;
+
+
+		protected var _inverseByPropertyName : String;
 
 
 		protected var _localColumnName : String;
@@ -297,7 +301,7 @@ package com.huafu.sql.orm.relation
 		{
 			if (!_foreignRelation)
 			{
-				_foreignRelation = foreignDescriptor.getRelationTo(ownerDescriptor, localColumnName);
+				_foreignRelation = foreignDescriptor.getRelatedTo(inverseByPropertyName);
 			}
 			return _foreignRelation;
 		}
@@ -345,6 +349,28 @@ package com.huafu.sql.orm.relation
 				foreignTableAlias = foreignDescriptor.tableName;
 			}
 			return foreignTableAlias + "." + foreignColumnName + " = " + localTableAlias + "." + localColumnName;
+		}
+
+
+		/**
+		 * The name of the property in the foreign model inversing this relation
+		 */
+		public function get inverseByPropertyName() : String
+		{
+			if (!_inverseByPropertyName)
+			{
+				_inverseByPropertyName = foreignDescriptor.ormClassName.substr(0, 1).toUpperCase() + foreignDescriptor.
+						ormClassName.substr(1);
+				if (!foreignDescriptor.ormReflectionClass.hasProperty(_inverseByPropertyName))
+				{
+					_inverseByPropertyName += "s";
+				}
+				if (!foreignDescriptor.ormReflectionClass.hasProperty(_inverseByPropertyName))
+				{
+					_inverseByPropertyName = "?";
+				}
+			}
+			return _inverseByPropertyName;
 		}
 
 

@@ -52,8 +52,8 @@ package com.huafu.sql.orm.relation
 				metadata : ReflectionMetadata)
 		{
 			super(ownerDescriptor, property, metadata);
-			_usingOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata, "usingClass");
-			_foreignOrmClassName = ORMRelation.readOrmClassFromMetadataArg(metadata);
+			_localToUsingPropertyName = metadata.argValueString("localToBridge");
+			_usingToForeignPropertyName = metadata.argValueString("bridgeToForeign");
 			_foreignIsUnique = !ReflectionClass.isClassInheriting(property.dataTypeClass, IORMIterator);
 		}
 
@@ -61,16 +61,19 @@ package com.huafu.sql.orm.relation
 		protected var _localToUsing : IORMRelation;
 
 
+		protected var _localToUsingPropertyName : String;
+
+
 		protected var _usingOrmClass : Class;
-
-
-		protected var _usingOrmClassName : String;
 
 
 		protected var _usingOrmDescriptor : ORMDescriptor;
 
 
 		protected var _usingToForeign : IORMRelation;
+
+
+		protected var _usingToForeignPropertyName : String;
 
 
 		/**
@@ -112,6 +115,19 @@ package com.huafu.sql.orm.relation
 				_foreignColumnName = usingToForeignRelation.foreignColumnName;
 			}
 			return _foreignColumnName;
+		}
+
+
+		/**
+		 * @copy IORMRelation#foreignOrmClass
+		 */
+		override public function get foreignOrmClass() : Class
+		{
+			if (!_foreignOrmClass)
+			{
+				_foreignOrmClass = usingToForeignRelation.foreignOrmClass;
+			}
+			return _foreignOrmClass;
 		}
 
 
@@ -159,7 +175,7 @@ package com.huafu.sql.orm.relation
 		{
 			if (!_localToUsing)
 			{
-				_localToUsing = ownerDescriptor.getRelationTo(usingDescriptor);
+				_localToUsing = ownerDescriptor.getRelatedTo(_localToUsingPropertyName);
 			}
 			return _localToUsing;
 		}
@@ -257,7 +273,7 @@ package com.huafu.sql.orm.relation
 		{
 			if (!_usingOrmDescriptor)
 			{
-				_usingOrmDescriptor = ORMDescriptor.forClass(usingOrmClass);
+				_usingOrmDescriptor = ownerToUsingRelation.foreignDescriptor;
 			}
 			return _usingOrmDescriptor;
 		}
@@ -270,7 +286,7 @@ package com.huafu.sql.orm.relation
 		{
 			if (!_usingOrmClass)
 			{
-				_usingOrmClass = ORMDescriptor.resolveOrmClass(_usingOrmClassName, ownerDescriptor);
+				_usingOrmClass = ownerToUsingRelation.foreignOrmClass;
 			}
 			return _usingOrmClass;
 		}
@@ -283,7 +299,7 @@ package com.huafu.sql.orm.relation
 		{
 			if (!_usingToForeign)
 			{
-				_usingToForeign = usingDescriptor.getRelationTo(foreignDescriptor);
+				_usingToForeign = usingDescriptor.getRelatedTo(_usingToForeignPropertyName);
 			}
 			return _usingToForeign;
 		}

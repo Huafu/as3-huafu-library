@@ -162,6 +162,7 @@ package com.huafu.sql.orm
 			_ormClassQName = reflection.classQName;
 			_ormClassName = reflection.className;
 			_relatedTo = new HashMap();
+			_ormReflectionClass = reflection;
 
 			// testing if the descriptor is already in the register
 			if (_allByClassQName.exists(ormClassQName))
@@ -311,6 +312,12 @@ package com.huafu.sql.orm
 		 * The qname of the ORM class taht describes this object
 		 */
 		private var _ormClassQName : String;
+
+
+		/**
+		 * Stores the reflection class of the ORM class
+		 */
+		private var _ormReflectionClass : ReflectionClass;
 
 
 		// special columns
@@ -555,6 +562,15 @@ package com.huafu.sql.orm
 		public function get ormClassQName() : String
 		{
 			return _ormClassQName;
+		}
+
+
+		/**
+		 * The reflection of the ORM class
+		 */
+		public function get ormReflectionClass() : ReflectionClass
+		{
+			return _ormReflectionClass;
 		}
 
 
