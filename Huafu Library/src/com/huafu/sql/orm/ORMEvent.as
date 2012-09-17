@@ -54,12 +54,6 @@ package com.huafu.sql.orm
 
 
 		/**
-		 * Fired when a proeprty is updated
-		 */
-		public static const PROPERTY_UPDATE : String = "propertyUpdate";
-
-
-		/**
 		 * Fired when an ORM object has been saved correctly
 		 */
 		public static const SAVED : String = "saved";
@@ -75,17 +69,12 @@ package com.huafu.sql.orm
 		 * Creates an ORMEvent
 		 *
 		 * @param type The type of event
-		 * @param property The description of the ORM property that has been updated
 		 * @param deletedId The ID of the ORM object that has been deleted
 		 */
-		public function ORMEvent(type : String, propertyName : String = null, deletedId : int = undefined)
+		public function ORMEvent(type : String, deletedId : int = undefined)
 		{
-			super(type, false, (type in [PROPERTY_UPDATE, SAVING, DELETING]));
-			if (type == PROPERTY_UPDATE)
-			{
-				_propertyName = propertyName;
-			}
-			else if (type == DELETED)
+			super(type, false, (type in [SAVING, DELETING]));
+			if (type == DELETED)
 			{
 				_deletedId = deletedId;
 			}
@@ -99,26 +88,11 @@ package com.huafu.sql.orm
 
 
 		/**
-		 * Stores the name of the property that has been updated
-		 */
-		private var _propertyName : String = null;
-
-
-		/**
 		 * The ID of the ORM object that has been deleted
 		 */
 		public function get deletedIndex() : int
 		{
 			return _deletedId;
-		}
-
-
-		/**
-		 * The name of the property that has been updated
-		 */
-		public function get propertyName() : String
-		{
-			return _propertyName;
 		}
 	}
 }

@@ -52,6 +52,11 @@ package com.huafu.sql.orm
 	 * @since 1.0
 	 */
 	[Bindable]
+	[Event(name = "deleted", type = "com.huafu.sql.orm.ORMEvent")]
+	[Event(name = "deleting", type = "com.huafu.sql.orm.ORMEvent")]
+	[Event(name = "loaded", type = "com.huafu.sql.orm.ORMEvent")]
+	[Event(name = "saved", type = "com.huafu.sql.orm.ORMEvent")]
+	[Event(name = "saving", type = "com.huafu.sql.orm.ORMEvent")]
 	public class ORM extends Proxy implements IEventDispatcher
 	{
 
@@ -418,6 +423,7 @@ package com.huafu.sql.orm
 			{
 				_isLoaded = true;
 				_isSaved = true;
+				dispatchEvent(new ORMEvent(ORMEvent.LOADED));
 			}
 			return res;
 		}
@@ -463,9 +469,9 @@ package com.huafu.sql.orm
 		public function remove(forceHardDelete : Boolean = false) : Boolean
 		{
 			var prop : ORMPropertyDescriptor = forceHardDelete ? null : _descriptor.deletedAtProperty,
-					q : SQLiteQuery = new SQLiteQuery(connection, true, PREPEND_SQL_COMMENT), r : SQLResult,
+					q : SQLiteQuery, r : SQLResult, id : int = primaryKeyValue,
 					pkName : String = _descriptor.primaryKeyProperty.columnName;
-			if (!isSaved || !_columnValues[pkName])
+			if (!isSaved || !id)
 			{
 				throw new IllegalOperationError("You must save any modification made in an ORM object before deleting it");
 			}
@@ -474,6 +480,11 @@ package com.huafu.sql.orm
 				// already deleted
 				return true;
 			}
+			if (!dispatchEvent(new ORMEvent(ORMEvent.DELETING)))
+			{
+				return false;
+			}
+			q = new SQLiteQuery(connection, true, PREPEND_SQL_COMMENT);
 			if (prop)
 			{
 				setColumnValue(prop.columnName, new Date(), false);
@@ -483,7 +494,7 @@ package com.huafu.sql.orm
 			{
 				q.deleteFrom(_descriptor.tableName);
 			}
-			r = q.where(pkName + " = " + q.bind(pkName, _columnValues[pkName])).execute();
+			r = q.where(pkName + " = " + q.bind(pkName, id)).execute();
 			if (r.rowsAffected == 1)
 			{
 				if (prop)
@@ -496,6 +507,7 @@ package com.huafu.sql.orm
 					reset();
 					_isDeleted = true;
 				}
+				dispatchEvent(new ORMEvent(ORMEvent.DELETED, id));
 				return true;
 			}
 			if (prop)
@@ -561,6 +573,10 @@ package com.huafu.sql.orm
 				// nothing to save
 				return true;
 			}
+			if (!dispatchEvent(new ORMEvent(ORMEvent.SAVING)))
+			{
+				return false;
+			}
 			if (isUpdate)
 			{
 				q.update(_descriptor.tableName).where(pkName + " = " + q.bind(pkName, _columnValues[pkName]));
@@ -603,6 +619,7 @@ package com.huafu.sql.orm
 			_isDeleted = false;
 			_isLoaded = true;
 			_changedColumnNames = new Array();
+			dispatchEvent(new ORMEvent(ORMEvent.SAVED));
 			return true;
 		}
 
