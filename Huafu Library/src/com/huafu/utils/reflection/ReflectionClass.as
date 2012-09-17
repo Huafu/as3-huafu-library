@@ -225,6 +225,18 @@ package com.huafu.utils.reflection
 
 
 		/**
+		 * Finds whether a property is defined or not in the given class
+		 *
+		 * @param name The name of the property to test existence
+		 * @return Returns true if the property exists, else false
+		 */
+		public function hasProperty(name : String) : Boolean
+		{
+			return (property(name) != null);
+		}
+
+
+		/**
 		 * Finds whether the reflected class is inheriting the given class or interface
 		 *
 		 * @param classOrInterface A pointer to a class or interface to test if the reflected class is derived from
