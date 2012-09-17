@@ -40,6 +40,7 @@ package com.huafu.sql.orm
 	import flash.events.IEventDispatcher;
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
+	import flash.utils.getDefinitionByName;
 	import mx.events.PropertyChangeEvent;
 	import mx.utils.ObjectProxy;
 	import avmplus.getQualifiedClassName;
@@ -75,21 +76,20 @@ package com.huafu.sql.orm
 		public function ORM(id : int = 0)
 		{
 			super();
+			_eventDispatcher = new EventDispatcher(this);
 			_descriptor = ORMDescriptor.forObject(this);
 			_columnValues = {};
 			_foreignObjects = {};
 			_columnNames = _descriptor.allColumnNames;
 			_foreignObjectsPropertyNames = _descriptor.relationsPropertyNames;
-
+			_columnValuesProxy = new ObjectProxy(_columnValues);
+			_foreignObjectsProxy = new ObjectProxy(_foreignObjects);
+			
 			reset();
 
-			_columnValuesProxy = new ObjectProxy(_columnValues);
 			_columnValuesProxy.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, _handleColumnValueChange);
-
-			_foreignObjectsProxy = new ObjectProxy(_foreignObjects);
 			_foreignObjectsProxy.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, _handleForeignObjectChange);
 
-			_eventDispatcher = new EventDispatcher(this);
 			if (id)
 			{
 				load(id);
@@ -140,6 +140,9 @@ package com.huafu.sql.orm
 
 
 		private var _notCachedQuery : SQLiteQuery;
+
+
+		private var _ormClass : Class;
 
 
 		private var _ormClassQName : String;
@@ -434,7 +437,11 @@ package com.huafu.sql.orm
 		 */
 		public function get ormClass() : Class
 		{
-			return _descriptor.ormClass;
+			if (!_ormClass)
+			{
+				_ormClass = getDefinitionByName(ormClassQName) as Class;
+			}
+			return _ormClass;
 		}
 
 
