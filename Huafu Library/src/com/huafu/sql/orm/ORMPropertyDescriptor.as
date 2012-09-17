@@ -32,6 +32,7 @@ package com.huafu.sql.orm
 	import com.huafu.utils.StringUtil;
 	import com.huafu.utils.reflection.ReflectionMetadata;
 	import com.huafu.utils.reflection.ReflectionProperty;
+	import flash.errors.IllegalOperationError;
 	import flash.utils.getDefinitionByName;
 
 
@@ -52,7 +53,12 @@ package com.huafu.sql.orm
 		public static function fromReflectionProperty(ownerOrm : ORMDescriptor, property : ReflectionProperty) : ORMPropertyDescriptor
 		{
 			var meta : ReflectionMetadata = property.uniqueMetadata("Column");
-			return new ORMPropertyDescriptor(ownerOrm, property.name, property.dataType, meta.argValueString("name"),
+			if (!property.name.substr(0, 1) == '_')
+			{
+				throw new IllegalOperationError("Any property of a model must be private and prepended with a '_'.");
+			}
+			return new ORMPropertyDescriptor(ownerOrm, property.name.substr(1), property.dataType, meta.
+					argValueString("name"),
 					meta.argValueString("type"), meta.hasArgument("nullable"),
 					meta.argValueNumber("size", 0), meta.hasArgument("unique"),
 					meta.argValueString("defaultValue"));

@@ -134,8 +134,12 @@ package com.huafu.sql.orm.relation
 		public function ORMRelation(ownerDescriptor : ORMDescriptor, property : ReflectionProperty,
 				metadata : ReflectionMetadata)
 		{
+			if (!property.name.substr(0, 1) == '_')
+			{
+				throw new IllegalOperationError("Any property of a model must be private and prepended with a '_'.");
+			}
 			_destinationOrmDescriptor = ownerDescriptor;
-			_destinationOrmPropertyName = property.name;
+			_destinationOrmPropertyName = property.name.substr(1);
 			_foreignIsUnique = false;
 			_inverseByPropertyName = metadata.argValueString("inverseBy");
 			logger.debug("Creating a new ORM relation descriptor of type '" + getQualifiedClassName(this)
